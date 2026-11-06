@@ -61,7 +61,13 @@
     flex: 1 1 150px; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
     padding: 8px 12px; font-size: 13px; font-weight: 700; color: var(--sub);
     display: flex; align-items: center; gap: 8px;
+    font-family: inherit; cursor: pointer; text-align: left; min-height: 46px;
+    box-shadow: 0 1px 3px rgba(30,41,59,.10); transition: transform .08s, box-shadow .15s;
   }
+  .step:active { transform: scale(.97); }
+  .step .go { margin-left: auto; font-size: 17px; font-weight: 900; color: #b6c2d2; flex: none; }
+  .step.now .go { color: var(--main); }
+  section.card { scroll-margin-top: 10px; }
   .step .no {
     width: 24px; height: 24px; border-radius: 50%; background: var(--main); color: #fff;
     display: grid; place-items: center; font-size: 13px; flex: none;
@@ -235,22 +241,22 @@
   </div>
 
   <div class="steps" id="steps-student">
-    <div class="step now"><span class="no">1</span>図形を選ぶ</div>
-    <div class="step"><span class="no">2</span>数値を決める</div>
-    <div class="step"><span class="no">3</span>動かして探る</div>
-    <div class="step"><span class="no">4</span>気づきを書く</div>
+    <button type="button" class="step now" data-step="1"><span class="no">1</span>図形を選ぶ<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="2"><span class="no">2</span>数値を決める<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="3"><span class="no">3</span>動かして探る<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="4"><span class="no">4</span>気づきを書く<span class="go" aria-hidden="true">›</span></button>
   </div>
   <div class="steps" id="steps-teacher" style="display:none">
-    <div class="step now"><span class="no">1</span>図形と単元を決める</div>
-    <div class="step"><span class="no">2</span>画面で図形を整える</div>
-    <div class="step"><span class="no">3</span>教材を作る</div>
-    <div class="step"><span class="no">4</span>印刷・保存する</div>
+    <button type="button" class="step now" data-step="1"><span class="no">1</span>図形と単元を決める<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="2"><span class="no">2</span>画面で図形を整える<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="3"><span class="no">3</span>教材を作る<span class="go" aria-hidden="true">›</span></button>
+    <button type="button" class="step" data-step="4"><span class="no">4</span>印刷・保存する<span class="go" aria-hidden="true">›</span></button>
   </div>
 
   <div class="layout">
     <!-- 左：図形選び・数値 -->
     <div>
-      <section class="card" aria-label="図形を選ぶ">
+      <section class="card" id="sec-fig" aria-label="図形を選ぶ">
         <h2><span class="badge">手順 1</span> 図形を選ぶ</h2>
         <div class="fig-grid" id="fig-grid"></div>
         <div class="prompt-row">
@@ -260,7 +266,7 @@
         <p class="hint">中学校・高校の図形単元に効く図形をそろえました。数値は下の欄で変えられます。</p>
       </section>
 
-      <section class="card" aria-label="数値を決める">
+      <section class="card" id="sec-param" aria-label="数値を決める">
         <h2><span class="badge">手順 2</span> 数値を決める</h2>
         <div id="param-area"></div>
         <div class="param-row" id="teacher-unit-row" style="display:none">
@@ -304,7 +310,7 @@
 
     <!-- 右：キャンバス＋下段 -->
     <div>
-      <section class="card canvas-card" aria-label="図形キャンバス">
+      <section class="card canvas-card" id="sec-board" aria-label="図形キャンバス">
         <div class="canvas-head">
           <div class="fig-title" id="fig-title">図形</div>
           <div class="canvas-tools">
@@ -325,7 +331,7 @@
           <table class="measure-table" id="measure-table"></table>
           <ul class="check-list" id="check-list"></ul>
         </section>
-        <section class="card" aria-label="気づきメモ">
+        <section class="card" id="sec-memo" aria-label="気づきメモ">
           <h2><span class="badge">手順 4</span> 気づきメモ</h2>
           <p style="margin:0 0 6px;font-size:13px;color:var(--sub)">気づきの種（ヒント）</p>
           <ul class="seed-list" id="seed-list"></ul>
@@ -1331,7 +1337,20 @@ t.classList.add('show');
 setTimeout(() => t.classList.remove('show'), 2400);
 }
 function setSteps(n) {
-document.querySelectorAll('#steps-student.step').forEach((el, i) => el.classList.toggle('now', i === n));
+const bar = S.mode === 'teacher'? '#steps-teacher .step': '#steps-student .step';
+document.querySelectorAll(bar).forEach((el, i) => el.classList.toggle('now', i === n));
+}
+function gotoStep(n) {
+const scrollTo = sel => { const t = document.querySelector(sel); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth'});};
+if (S.mode === 'teacher') {
+if (n === 1) scrollTo('#sec-param');
+else if (n === 2) scrollTo('#sec-board');
+else if (n === 3) { document.querySelector('.tab-btn[data-tab="lesson"]').click(); scrollTo('#teacher-card');}
+else if (n === 4) { document.querySelector('.tab-btn[data-tab="print"]').click(); scrollTo('#teacher-card');}
+} else {
+scrollTo(['#sec-fig', '#sec-param', '#sec-board', '#sec-memo'][n - 1]);
+}
+setSteps(n - 1);
 }
 function setMode(mode) {
 S.mode = mode;
@@ -1341,7 +1360,7 @@ $('mode-teacher').classList.toggle('active', mode === 'teacher');
 $('steps-student').style.display = mode === 'student'? '': 'none';
 $('steps-teacher').style.display = mode === 'teacher'? '': 'none';
 $('teacher-unit-row').style.display = mode === 'teacher'? '': 'none';
-if (mode === 'teacher') document.querySelectorAll('#steps-teacher.step').forEach((el, i) => el.classList.toggle('now', i === 0));
+if (mode === 'teacher') setSteps(0);
 render();
 }
 function download(name, blob) {
@@ -1360,6 +1379,7 @@ function init() {
 // 図形メニュー
 $('fig-grid').innerHTML = FIG_LIST.map(f => `<button type="button" class="fig-btn" data-fig="${f.key}">${f.name}<small>${f.sub}</small></button>`).join('');
 document.querySelectorAll('.fig-btn').forEach(b => b.addEventListener('click', () => { initFigure(b.dataset.fig); setSteps(1);}));
+document.querySelectorAll('.step').forEach(b => b.addEventListener('click', () => gotoStep(parseInt(b.dataset.step, 10))));
 $('prompt-btn').addEventListener('click', () => pickByPrompt($('prompt-input').value));
 $('prompt-input').addEventListener('keydown', e => { if (e.key === 'Enter') pickByPrompt($('prompt-input').value);});
 // モード
