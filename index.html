@@ -384,7 +384,7 @@
             <button id="dl-print" class="btn ghost" type="button" style="display:none">⬇️ 画像を保存</button>
             <button id="dl-svg" class="btn ghost" type="button">⬇️ SVGを保存</button>
           </div>
-          <div id="print-preview"><p style="color:var(--sub);font-size:13px">板書・印刷に使える大きな図形画像を作ります。共有ボタンからプリントも選べます。</p></div>
+          <div id="print-preview"><p style="color:var(--sub);font-size:13px">板書・印刷に使える大きな図形画像を作ります。作ると、印刷や保存のボタンが出ます（スマホでは共有からプリントも選べます）。</p></div>
         </div>
       </section>
     </div>
@@ -1290,6 +1290,16 @@ out += `<text x="${W / 2}" y="${H - 24}" text-anchor="middle" font-size="19" fil
 out += '</svg>';
 return out;
 }
+const IS_MOBILE_SHARE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function printFigureDesktop() {
+const url = URL.createObjectURL(S.printPng);
+const w = window.open('', '_blank');
+if (!w) { download('figure-a4.png', S.printPng); toast('印刷画面を開けなかったので、画像を保存しました'); return;}
+w.document.write('<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>印刷用図形（A4横）</title><style>@page { size: A4 landscape; margin: 0;} html, body { margin: 0; padding: 0;} img { width: 100%; height: auto; display: block;}</style></head><body><img src="' + url + '" alt="印刷用図形"><script>window.addEventListener("load", () => setTimeout(() => window.print(), 150));<\/script></body></html>');
+w.document.close();
+setTimeout(() => URL.revokeObjectURL(url), 60000);
+toast('印刷画面を開きました');
+}
 async function makePrintImage() {
 S.printSvg = buildPrintSvg();
 const blob = new Blob([S.printSvg], { type: 'image/svg+xml;charset=utf-8'});
@@ -1305,8 +1315,9 @@ URL.revokeObjectURL(url);
 S.printPng = await new Promise(res => cv.toBlob(res, 'image/png'));
 const prev = $('print-preview');
 const purl = URL.createObjectURL(S.printPng);
-prev.innerHTML = `<img src="${purl}" alt="印刷用図形（A4横）" /><p class="hint">共有ボタンから「プリント」を選ぶと印刷できます。画像として保存もできます。</p>`;
+prev.innerHTML = `<img src="${purl}" alt="印刷用図形（A4横）" /><p class="hint">${IS_MOBILE_SHARE ? '共有ボタンから「プリント」を選ぶと印刷できます。' : '「印刷する」ボタンで、印刷プレビューのある画面が開きます。'}画像として保存もできます。</p>`;
 $('share-print').style.display = '';
+$('share-print').textContent = IS_MOBILE_SHARE ? '📤 共有する（印刷・保存）' : '🖨️ 印刷する';
 $('dl-print').style.display = '';
 toast('印刷用図形を作りました');
 setTimeout(() => $('print-preview').scrollIntoView({ block: 'center', behavior: 'smooth'}), 60);
@@ -1473,6 +1484,7 @@ copyText(S.worksheetText, 'ワークシートのテキストをコピーしま�
 $('make-print').addEventListener('click', () => makePrintImage().catch(() => toast('印刷用図形を作れませんでした')));
 $('share-print').addEventListener('click', async () => {
 if (!S.printPng) return;
+if (!IS_MOBILE_SHARE) { printFigureDesktop(); return;}
 const file = new File([S.printPng], 'figure-a4.png', { type: 'image/png'});
 if (navigator.canShare && navigator.canShare({ files: [file]})) {
 try { await navigator.share({ files: [file], title: '印刷用図形'});} catch (_) {}
