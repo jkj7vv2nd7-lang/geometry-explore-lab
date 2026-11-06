@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>図形探求ラボ ― 動かして測る図形学習</title>
+<link rel="icon" href="icon.png" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<style>
+  :root {
+    --main: #4338ca; --main2: #0d9488; --accent: #f59e0b;
+    --ink: #1e293b; --sub: #64748b; --paper: #f6f4ee; --card: #ffffff;
+    --line: #e2e8f0; --ok: #059669; --warn: #d97706;
+    --fig-fill: #e0e7ff; --fig-stroke: #4338ca;
+  }
+  body[data-mode="teacher"] { --main: #047857; --main2: #0f766e; --fig-fill: #d1fae5; --fig-stroke: #047857; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    background: var(--paper); color: var(--ink); line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .serif { font-family: "Times New Roman", "Hiragino Mincho ProN", "Yu Mincho", serif; }
+  sup { font-size: .68em; }
+  .rad { border-top: .09em solid currentColor; padding: 0 .12em; margin-left: .02em; }
+
+  /* ---------- ヘッダー ---------- */
+  header {
+    background: linear-gradient(120deg, var(--main) 0%, var(--main2) 100%);
+    color: #fff; padding: 18px 16px 14px;
+    box-shadow: 0 4px 18px rgba(30, 41, 59, .25);
+  }
+  .header-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+  .title-box { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.92);
+    display: grid; place-items: center; flex: none;
+  }
+  .logo svg { display: block; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: .02em; }
+  .subtitle { font-size: 12.5px; opacity: .92; margin: 2px 0 0; }
+  .mode-switch { display: flex; background: rgba(255,255,255,.22); border-radius: 999px; padding: 4px; gap: 4px; }
+  .mode-switch button {
+    border: 0; border-radius: 999px; padding: 10px 18px; font-size: 14.5px; font-weight: 700;
+    background: transparent; color: #fff; cursor: pointer; min-height: 44px;
+  }
+  .mode-switch button.active { background: #fff; color: var(--main); box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+
+  /* ---------- 使い分けバナー ---------- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 14px 14px 30px; }
+  .diff-banner {
+    background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 14px;
+    padding: 10px 14px; font-size: 13.5px; margin-bottom: 12px;
+  }
+  .diff-banner b { color: #92400e; }
+
+  /* ---------- ステップバー ---------- */
+  .steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .step {
+    flex: 1 1 150px; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 8px 12px; font-size: 13px; font-weight: 700; color: var(--sub);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step .no {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--main); color: #fff;
+    display: grid; place-items: center; font-size: 13px; flex: none;
+  }
+  .step.now { border-color: var(--main); color: var(--ink); box-shadow: 0 2px 10px rgba(67,56,202,.15); }
+
+  /* ---------- レイアウト ---------- */
+  .layout { display: grid; grid-template-columns: 348px minmax(0, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border-radius: 18px; box-shadow: 0 3px 14px rgba(30,41,59,.08);
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .badge {
+    background: var(--main); color: #fff; font-size: 11.5px; border-radius: 999px; padding: 2px 9px; font-weight: 700;
+  }
+  .hint { font-size: 12.5px; color: var(--sub); margin: 6px 0 0; }
+
+  /* ---------- 図形メニュー ---------- */
+  .fig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fig-btn {
+    border: 1.5px solid var(--line); background: #f8fafc; border-radius: 12px; padding: 10px 8px;
+    font-size: 13.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left;
+    min-height: 48px; line-height: 1.35;
+  }
+  .fig-btn small { display: block; font-weight: 400; font-size: 11.5px; color: var(--sub); }
+  .fig-btn.active { border-color: var(--main); background: var(--fig-fill); box-shadow: 0 0 0 2px rgba(67,56,202,.15); }
+  .fig-btn:active { transform: scale(.98); }
+
+  .param-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 12px; }
+  .param-row label { font-size: 12px; font-weight: 700; color: var(--sub); display: flex; flex-direction: column; gap: 3px; }
+  .param-row input[type="number"], .param-row select, .text-input {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; font-size: 15px;
+    min-height: 44px; background: #fff; color: var(--ink);
+  }
+  .param-row input[type="number"] { width: 84px; }
+  .btn {
+    border: 0; border-radius: 12px; padding: 11px 18px; font-size: 14.5px; font-weight: 700;
+    background: var(--main); color: #fff; cursor: pointer; min-height: 46px;
+  }
+  .btn.sub { background: #eef2ff; color: var(--main); border: 1.5px solid #c7d2fe; }
+  body[data-mode="teacher"] .btn.sub { background: #ecfdf5; border-color: #a7f3d0; }
+  .btn.ghost { background: #f1f5f9; color: var(--ink); border: 1.5px solid var(--line); }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .5; }
+  .prompt-row { display: flex; gap: 8px; margin-top: 12px; }
+  .prompt-row input { flex: 1; }
+
+  /* ---------- キャンバス ---------- */
+  .canvas-card { padding: 0; overflow: hidden; }
+  .canvas-head {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+  }
+  .canvas-head .fig-title { font-size: 17px; font-weight: 800; }
+  .canvas-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tool-btn {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer; min-height: 38px; color: var(--ink);
+  }
+  .tool-btn[aria-pressed="true"] { background: var(--fig-fill); border-color: var(--main); }
+  #canvas-wrap { position: relative; background: #fffdf7; }
+  #board { display: block; width: 100%; height: auto; touch-action: none; }
+  #measure-bar {
+    position: absolute; left: 10px; bottom: 10px; right: 10px;
+    background: rgba(15, 23, 42, .86); color: #fff; border-radius: 12px;
+    padding: 8px 12px; font-size: 13px; line-height: 1.5; pointer-events: none;
+  }
+  #measure-bar .serif { font-size: 13.5px; }
+  .drag-note { padding: 9px 16px; font-size: 12.5px; color: var(--sub); border-top: 1px solid var(--line); background: #fff; }
+
+  /* ---------- 計測・性質チェック・メモ ---------- */
+  .under-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .under-grid { grid-template-columns: 1fr; } }
+  .measure-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .measure-table td { padding: 4px 6px; border-bottom: 1px dashed var(--line); }
+  .measure-table td:last-child { text-align: right; font-weight: 700; }
+  .check-list { list-style: none; margin: 12px 0 0; padding: 0; }
+  .check-list li {
+    display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px; border-radius: 10px;
+    background: #f8fafc; margin-bottom: 6px; font-size: 13.5px;
+  }
+  .check-list li .mark { font-weight: 900; flex: none; width: 20px; text-align: center; }
+  .check-list li.ok { background: #ecfdf5; }
+  .check-list li.ok .mark { color: var(--ok); }
+  .check-list li.info .mark { color: var(--warn); }
+  .check-list .detail { color: var(--sub); font-size: 12.5px; display: block; }
+  .seed-list { margin: 0 0 8px; padding-left: 18px; font-size: 13.5px; color: var(--ink); }
+  .seed-list li { margin-bottom: 4px; }
+  #memo {
+    width: 100%; min-height: 108px; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 10px; font-size: 14.5px; font-family: inherit; resize: vertical; background: #fffef5;
+  }
+  .memo-saved { font-size: 11.5px; color: var(--ok); min-height: 1em; }
+
+  /* ---------- 解説・チャット ---------- */
+  #explain-body { font-size: 14.5px; }
+  #explain-body h3 { font-size: 15px; margin: 12px 0 4px; }
+  #explain-body p { margin: 4px 0; }
+  #chat-log { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .bubble { border-radius: 14px; padding: 9px 12px; font-size: 14px; max-width: 92%; white-space: pre-wrap; }
+  .bubble.ai { background: #eef2ff; align-self: flex-start; }
+  body[data-mode="teacher"] .bubble.ai { background: #ecfdf5; }
+  .bubble.user { background: var(--main); color: #fff; align-self: flex-end; }
+  .chat-row { display: flex; gap: 8px; }
+  .chat-row input { flex: 1; }
+
+  /* ---------- 教師モード ---------- */
+  #teacher-card { display: none; }
+  body[data-mode="teacher"] #teacher-card { display: block; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tab-btn {
+    border: 1.5px solid var(--line); background: #f8fafc; border-radius: 999px; padding: 9px 16px;
+    font-weight: 700; font-size: 13.5px; cursor: pointer; min-height: 42px; color: var(--ink);
+  }
+  .tab-btn.active { background: var(--main); color: #fff; border-color: var(--main); }
+  .doc-out { font-size: 14px; }
+  .doc-out h3 { font-size: 15.5px; margin: 14px 0 5px; border-left: 4px solid var(--main); padding-left: 8px; }
+  .doc-out h4 { font-size: 14px; margin: 10px 0 4px; }
+  .doc-out table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
+  .doc-out th, .doc-out td { border: 1px solid #cbd5e1; padding: 5px 8px; text-align: left; vertical-align: top; }
+  .doc-out th { background: #f1f5f9; }
+  .doc-out p { margin: 4px 0; }
+  .doc-out ul { margin: 4px 0 8px; padding-left: 20px; }
+  #print-preview { text-align: center; }
+  #print-preview img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+  /* ---------- 設定・その他 ---------- */
+  .settings-grid { display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; }
+  .settings-grid input[type="password"] {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; font-size: 14px; min-height: 44px; width: 100%;
+  }
+  footer { text-align: center; color: var(--sub); font-size: 12px; padding: 6px 14px 26px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13.5px;
+    opacity: 0; pointer-events: none; transition: all .25s; z-index: 50; max-width: 92vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body data-mode="student">
+
+<header>
+  <div class="header-inner">
+    <div class="title-box">
+      <div class="logo" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 48 48">
+          <polygon points="10,38 12,12 38,34" fill="#e0e7ff" stroke="#4338ca" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="20.5" cy="27.5" r="7.5" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+          <circle cx="12" cy="12" r="3.4" fill="#4338ca"/><circle cx="10" cy="38" r="3.4" fill="#4338ca"/><circle cx="38" cy="34" r="3.4" fill="#4338ca"/>
+        </svg>
+      </div>
+      <div>
+        <h1>図形探求ラボ</h1>
+        <p class="subtitle">動かして、測って、気づく図形学習 ― 中学校・高校の図形単元のために</p>
+      </div>
+    </div>
+    <nav class="mode-switch" aria-label="モード切替">
+      <button id="mode-student" class="active" type="button">🎒 生徒モード</button>
+      <button id="mode-teacher" type="button">🍎 教師モード</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="diff-banner">
+    📐 <b>使い分け</b>：「作図ノート」はコンパスと定規で図形を<b>作る</b>道具。この「図形探求ラボ」は、頂点を<b>動かして</b>長さ・角度の変化を測り、性質や定理を<b>自分で見つける</b>道具です。
+  </div>
+
+  <div class="steps" id="steps-student">
+    <div class="step now"><span class="no">1</span>図形を選ぶ</div>
+    <div class="step"><span class="no">2</span>数値を決める</div>
+    <div class="step"><span class="no">3</span>動かして探る</div>
+    <div class="step"><span class="no">4</span>気づきを書く</div>
+  </div>
+  <div class="steps" id="steps-teacher" style="display:none">
+    <div class="step now"><span class="no">1</span>図形と単元を決める</div>
+    <div class="step"><span class="no">2</span>画面で図形を整える</div>
+    <div class="step"><span class="no">3</span>教材を作る</div>
+    <div class="step"><span class="no">4</span>印刷・保存する</div>
+  </div>
+
+  <div class="layout">
+    <!-- 左：図形選び・数値 -->
+    <div>
+      <section class="card" aria-label="図形を選ぶ">
+        <h2><span class="badge">手順 1</span> 図形を選ぶ</h2>
+        <div class="fig-grid" id="fig-grid"></div>
+        <div class="prompt-row">
+          <input id="prompt-input" class="text-input" type="text" placeholder="言葉でも選べます（例：三平方の定理の証明図）" />
+          <button id="prompt-btn" class="btn sub" type="button">選ぶ</button>
+        </div>
+        <p class="hint">中学校・高校の図形単元に効く図形をそろえました。数値は下の欄で変えられます。</p>
+      </section>
+
+      <section class="card" aria-label="数値を決める">
+        <h2><span class="badge">手順 2</span> 数値を決める</h2>
+        <div id="param-area"></div>
+        <div class="param-row" id="teacher-unit-row" style="display:none">
+          <label>単元名（教師モード用）
+            <input id="unit-input" class="text-input" type="text" placeholder="例：中学校3年・三平方の定理" style="width:230px" />
+          </label>
+          <label>対象
+            <select id="grade-select">
+              <option value="中学校1年">中学校1年</option>
+              <option value="中学校2年">中学校2年</option>
+              <option value="中学校3年" selected>中学校3年</option>
+              <option value="高校">高校</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card" aria-label="設定">
+        <h2>⚙️ 設定・保存</h2>
+        <div class="settings-grid">
+          <div>
+            <label for="gemini-key" style="font-weight:700">Gemini APIキー（任意）</label>
+            <input id="gemini-key" type="password" placeholder="キーを入れると AI の解説・指導案が使えます" autocomplete="off" />
+            <p class="hint">キーはこの端末の中だけに保存され、文章の生成にだけ使います。図形の計算はキー無しでも正確に動きます。</p>
+            <div class="btn-row">
+              <button id="key-save" class="btn sub" type="button">キーを保存</button>
+              <button id="key-clear" class="btn ghost" type="button">キーを消す</button>
+            </div>
+          </div>
+          <div>
+            <div class="btn-row">
+              <button id="json-save" class="btn ghost" type="button">💾 図形をJSON保存</button>
+              <button id="json-load" class="btn ghost" type="button">📂 JSONを読込む</button>
+              <input id="json-file" type="file" accept="application/json,.json" style="display:none" />
+            </div>
+            <p class="hint">いまの図形（頂点の位置と数値）をファイルに残せます。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 右：キャンバス＋下段 -->
+    <div>
+      <section class="card canvas-card" aria-label="図形キャンバス">
+        <div class="canvas-head">
+          <div class="fig-title" id="fig-title">図形</div>
+          <div class="canvas-tools">
+            <button id="toggle-measures" class="tool-btn" type="button" aria-pressed="true">📏 数値ラベル ON</button>
+            <button id="reset-fig" class="tool-btn" type="button">⟲ 最初の形に戻す</button>
+          </div>
+        </div>
+        <div id="canvas-wrap">
+          <svg id="board" viewBox="0 0 800 540" role="img" aria-label="図形キャンバス"></svg>
+          <div id="measure-bar"></div>
+        </div>
+        <p class="drag-note">💡 点（●）をドラッグすると図形が変形し、長さ・角度・面積がその場で変わります。「変わるもの／変わらないもの」を探してみましょう。</p>
+      </section>
+
+      <div class="under-grid">
+        <section class="card" aria-label="計測と性質チェック">
+          <h2><span class="badge">手順 3</span> 計測と性質チェック</h2>
+          <table class="measure-table" id="measure-table"></table>
+          <ul class="check-list" id="check-list"></ul>
+        </section>
+        <section class="card" aria-label="気づきメモ">
+          <h2><span class="badge">手順 4</span> 気づきメモ</h2>
+          <p style="margin:0 0 6px;font-size:13px;color:var(--sub)">気づきの種（ヒント）</p>
+          <ul class="seed-list" id="seed-list"></ul>
+          <textarea id="memo" placeholder="動かして気づいたことを書いてみよう。例：頂点をどこへ動かしても、内角の和は180°のままだった。"></textarea>
+          <div class="memo-saved" id="memo-saved"></div>
+        </section>
+      </div>
+
+      <section class="card" aria-label="解説とAI先生">
+        <h2>💬 解説・AI先生</h2>
+        <div id="explain-body"></div>
+        <div class="btn-row">
+          <button id="ai-explain" class="btn sub" type="button" style="display:none">✨ AIで解説を作る（キー使用）</button>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+        <div id="chat-log" aria-live="polite"></div>
+        <div class="chat-row">
+          <input id="chat-input" class="text-input" type="text" placeholder="わからないことを聞いてみよう（例：なぜ内接円の中心はそこなの？）" />
+          <button id="chat-send" class="btn" type="button">送信</button>
+        </div>
+        <p class="hint">AI先生は、いま画面に出ている正確な数値をもとに答えます。キー無しのときは、観察のヒントを返します。</p>
+      </section>
+
+      <section class="card" id="teacher-card" aria-label="教師モード">
+        <h2>🍎 教師モード ― 教材づくり</h2>
+        <p class="hint" style="margin-bottom:10px">いま画面にある図形と、その正確な数値から教材を作ります。単元名は左の「数値を決める」欄で入れられます。</p>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="lesson" type="button">📝 指導案</button>
+          <button class="tab-btn" data-tab="worksheet" type="button">📋 ワークシート</button>
+          <button class="tab-btn" data-tab="print" type="button">🖨️ 印刷用図形</button>
+        </div>
+        <div id="tab-lesson">
+          <div class="btn-row" style="margin:0 0 10px">
+            <button id="make-lesson" class="btn" type="button">指導案を作る</button>
+            <button id="ai-lesson" class="btn sub" type="button" style="display:none">✨ AIで指導案を作る</button>
+            <button id="copy-lesson" class="btn ghost" type="button">📑 テキストをコピー</button>
+          </div>
+          <div class="doc-out" id="lesson-out"><p style="color:var(--sub)">「指導案を作る」を押すと、3観点対応の指導案がここに出ます。</p></div>
+        </div>
+        <div id="tab-worksheet" style="display:none">
+          <div class="btn-row" style="margin:0 0 10px">
+            <button id="make-worksheet" class="btn" type="button">ワークシートを作る</button>
+            <button id="copy-worksheet" class="btn ghost" type="button">📑 テキストをコピー</button>
+          </div>
+          <div class="doc-out" id="worksheet-out"><p style="color:var(--sub)">図形に合わせた問い・解答・評価基準がここに出ます。</p></div>
+        </div>
+        <div id="tab-print" style="display:none">
+          <div class="btn-row" style="margin:0 0 10px">
+            <button id="make-print" class="btn" type="button">印刷用図形を作る（A4横）</button>
+            <button id="share-print" class="btn sub" type="button" style="display:none">📤 共有する（印刷・保存）</button>
+            <button id="dl-print" class="btn ghost" type="button" style="display:none">⬇️ 画像を保存</button>
+            <button id="dl-svg" class="btn ghost" type="button">⬇️ SVGを保存</button>
+          </div>
+          <div id="print-preview"><p style="color:var(--sub);font-size:13px">板書・印刷に使える大きな図形画像を作ります。共有ボタンからプリントも選べます。</p></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer>図形探求ラボ ― 動かして測る図形学習 ｜ 図形の計算はすべて端末の中で正確に行い、AIは文章づくりだけに使います</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================================================================
+ * 図形探求ラボ — 幾何エンジン
+ * 数学座標（Y上向き）を正とし、計測はすべて問題の単位で計算する。
+ * 画面への拡大・縮小は描画のときだけ行う。
+ * ================================================================ */
+const $ = id => document.getElementById(id);
+const TOL = 0.06;        // 「等しい」とみなす誤差（長さ）
+const TOL_DEG = 0.6;     // 「等しい」とみなす誤差（角度）
+
+function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
+function d2(p, q) { return dist(p.x, p.y, q.x, q.y); }
+function triArea(a, b, c) { return Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2; }
+function polyArea(pts) {
+  let s = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    s += p.x * q.y - q.x * p.y;
+  }
+  return Math.abs(s / 2);
+}
+/* 頂点Pにおける角 QPR（度） */
+function angleAt(p, q, r) {
+  const v1x = q.x - p.x, v1y = q.y - p.y, v2x = r.x - p.x, v2y = r.y - p.y;
+  const n1 = Math.hypot(v1x, v1y) || 1, n2 = Math.hypot(v2x, v2y) || 1;
+  const c = Math.max(-1, Math.min(1, (v1x * v2x + v1y * v2y) / (n1 * n2)));
+  return Math.acos(c) * 180 / Math.PI;
+}
+function fmt(n, digits = 1) {
+  if (!isFinite(n)) return '―';
+  const v = Math.round(n * Math.pow(10, digits)) / Math.pow(10, digits);
+  return Number.isInteger(v) ? String(v) : v.toFixed(digits);
+}
+function eq(a, b, tol = TOL) { return Math.abs(a - b) <= tol; }
+function eqDeg(a, b) { return Math.abs(a - b) <= TOL_DEG; }
+function centroid(pts) {
+  let x = 0, y = 0;
+  pts.forEach(p => { x += p.x; y += p.y; });
+  return { x: x / pts.length, y: y / pts.length };
+}
+/* 内心と内接円の半径 */
+function incircle(a, b, c) {
+  const sa = d2(b, c), sb = d2(c, a), sc = d2(a, b), p = sa + sb + sc;
+  if (p === 0) return null;
+  return {
+    x: (sa * a.x + sb * b.x + sc * c.x) / p,
+    y: (sa * a.y + sb * b.y + sc * c.y) / p,
+    r: 2 * triArea(a, b, c) / p
+  };
+}
+/* 外心と外接円の半径 */
+function circumcircle(a, b, c) {
+  const d = 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+  if (Math.abs(d) < 1e-9) return null;
+  const a2 = a.x * a.x + a.y * a.y, b2 = b.x * b.x + b.y * b.y, c2 = c.x * c.x + c.y * c.y;
+  const ux = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d;
+  const uy = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d;
+  return { x: ux, y: uy, r: dist(ux, uy, a.x, a.y) };
+}
+/* 点Pから直線ABへの距離と垂線の足 */
+function footToLine(p, a, b) {
+  const vx = b.x - a.x, vy = b.y - a.y, L2 = vx * vx + vy * vy || 1;
+  const t = ((p.x - a.x) * vx + (p.y - a.y) * vy) / L2;
+  const fx = a.x + vx * t, fy = a.y + vy * t;
+  return { foot: { x: fx, y: fy }, dist: dist(p.x, p.y, fx, fy) };
+}
+/* 辺PQの外側（Rと反対側）に正方形を作る4頂点 */
+function squareOutward(p, q, r) {
+  const vx = q.x - p.x, vy = q.y - p.y;
+  let nx = -vy, ny = vx;
+  const mx = (p.x + q.x) / 2 + nx, my = (p.y + q.y) / 2 + ny;
+  if (dist(mx, my, r.x, r.y) < dist((p.x + q.x) / 2 - nx, (p.y + q.y) / 2 - ny, r.x, r.y)) { nx = -nx; ny = -ny; }
+  return [p, q, { x: q.x + nx, y: q.y + ny }, { x: p.x + nx, y: p.y + ny }];
+}
+
+/* ================================================================
+ * 状態
+ * ================================================================ */
+const S = {
+  mode: 'student',
+  fig: 'tri-in',
+  pts: {},          // 数学座標の頂点 {name:{x,y}}
+  params: {},       // 図形ごとの数値パラメータ
+  showMeasures: true,
+  printPng: null,   // 印刷用PNGのBlob
+  printSvg: '',     // 印刷用SVG文字列
+  lessonText: '', worksheetText: ''
+};
+
+const FIG_LIST = [
+  { key: 'tri',        name: '三角形',           sub: '性質・内角の和', unit: '中学校2年・三角形の性質' },
+  { key: 'tri-in',     name: '三角形と内接円',   sub: '内心・接する円', unit: '中学校3年・円の性質' },
+  { key: 'tri-circum', name: '三角形と外接円',   sub: '外心・3点を通る円', unit: '中学校3年・円の性質' },
+  { key: 'quad',       name: '四角形',           sub: '平行四辺形の性質', unit: '中学校2年・平行四辺形' },
+  { key: 'regular',    name: '正多角形',         sub: '内角・対角線', unit: '中学校2年・多角形の角' },
+  { key: 'pyth',       name: '三平方の定理',     sub: '証明図（正方形つき）', unit: '中学校3年・三平方の定理' },
+  { key: 'similar',    name: '相似・拡大図',     sub: '対応する辺と角', unit: '中学校3年・相似な図形' },
+  { key: 'circle-angle', name: '円周角の定理',   sub: '中心角との関係', unit: '中学校3年・円周角の定理' }
+];
+const FIG_TITLE = {}; FIG_LIST.forEach(f => FIG_TITLE[f.key] = f.name);
+
+/* ---------- 初期形 ---------- */
+function triPoints(subtype, base, h) {
+  if (subtype === 'iso') return { A: { x: base / 2, y: h }, B: { x: 0, y: 0 }, C: { x: base, y: 0 } };
+  if (subtype === 'equi') return { A: { x: base / 2, y: base * Math.sqrt(3) / 2 }, B: { x: 0, y: 0 }, C: { x: base, y: 0 } };
+  return { A: { x: 0, y: h }, B: { x: 0, y: 0 }, C: { x: base, y: 0 } }; // 直角（Bが直角）・自由も同じ初期形
+}
+function quadPoints(subtype) {
+  switch (subtype) {
+    case 'square': return { A: { x: 0, y: 0 }, B: { x: 3, y: 0 }, C: { x: 3, y: 3 }, D: { x: 0, y: 3 } };
+    case 'rect':   return { A: { x: 0, y: 0 }, B: { x: 4.4, y: 0 }, C: { x: 4.4, y: 2.6 }, D: { x: 0, y: 2.6 } };
+    case 'rhom':   return { A: { x: 0, y: 0 }, B: { x: 3.4, y: 0 }, C: { x: 4.6, y: 2.4 }, D: { x: 1.2, y: 2.4 } };
+    case 'trap':   return { A: { x: 0, y: 0 }, B: { x: 5, y: 0 }, C: { x: 3.6, y: 2.6 }, D: { x: 1, y: 2.6 } };
+    default:       return { A: { x: 0, y: 0 }, B: { x: 4, y: 0 }, C: { x: 5, y: 2.6 }, D: { x: 1, y: 2.6 } }; // 平行四辺形
+  }
+}
+function initFigure(key) {
+  S.fig = key;
+  const p = S.params[key] || {};
+  if (key === 'tri') { p.subtype = p.subtype || 'right'; p.base = p.base || 4; p.height = p.height || 3; S.pts = triPoints(p.subtype, p.base, p.height); }
+  if (key === 'tri-in' || key === 'tri-circum') { p.base = p.base || 4; p.height = p.height || 3; S.pts = triPoints('right', p.base, p.height); }
+  if (key === 'quad') { p.subtype = p.subtype || 'para'; S.pts = quadPoints(p.subtype); }
+  if (key === 'regular') { p.n = p.n || 6; p.radius = p.radius || 3; S.pts = {}; }
+  if (key === 'pyth') { p.base = p.base || 4; p.height = p.height || 3; S.pts = triPoints('right', p.base, p.height); }
+  if (key === 'similar') { p.k = p.k || 1.5; S.pts = { A: { x: 0, y: 0 }, B: { x: 3, y: 0 }, C: { x: 1, y: 2.4 } }; }
+  if (key === 'circle-angle') { p.radius = p.radius || 3.2; p.thA = 150; p.thB = 30; p.thP = 250; S.pts = {}; }
+  S.params[key] = p;
+  document.querySelectorAll('.fig-btn').forEach(b => b.classList.toggle('active', b.dataset.fig === key));
+  $('fig-title').textContent = FIG_TITLE[key];
+  buildParamUI();
+  loadMemo();
+  render();
+}
+
+/* ================================================================
+ * 図形ビルダー：シーン（描画要素）＋計測＋性質チェック＋気づきの種
+ * scene = { polys, segs, circles, arcs, labels, points }
+ * ================================================================ */
+function sceneBase() { return { polys: [], segs: [], circles: [], arcs: [], labels: [], points: [] }; }
+function triMeasures(A, B, C) {
+  const ab = d2(A, B), bc = d2(B, C), ca = d2(C, A);
+  const aA = angleAt(A, B, C), aB = angleAt(B, A, C), aC = angleAt(C, A, B);
+  return { ab, bc, ca, aA, aB, aC, area: triArea(A, B, C), per: ab + bc + ca };
+}
+function triChecks(m) {
+  const checks = [];
+  const sum = m.aA + m.aB + m.aC;
+  checks.push({ ok: eqDeg(sum, 180), text: '内角の和は 180°', detail: `いま ∠A＋∠B＋∠C ＝ ${fmt(m.aA)}°＋${fmt(m.aB)}°＋${fmt(m.aC)}° ＝ ${fmt(sum)}°` });
+  const eqSides = [];
+  if (eq(m.ab, m.bc)) eqSides.push('AB＝BC');
+  if (eq(m.bc, m.ca)) eqSides.push('BC＝CA');
+  if (eq(m.ca, m.ab)) eqSides.push('CA＝AB');
+  if (eqSides.length === 3) checks.push({ ok: true, text: '正三角形です', detail: '3辺がすべて等しく、3つの角もすべて 60° です' });
+  else if (eqSides.length) checks.push({ ok: true, text: '二等辺三角形です（' + eqSides.join('・') + '）', detail: '等しい辺の向かい合う角（底角）も等しくなっています' });
+  else checks.push({ ok: false, info: true, text: '3辺の長さはすべて違います', detail: '2辺が等しくなるように頂点を動かすと、二等辺三角形になります' });
+  const rights = [];
+  if (eqDeg(m.aA, 90)) rights.push('∠A');
+  if (eqDeg(m.aB, 90)) rights.push('∠B');
+  if (eqDeg(m.aC, 90)) rights.push('∠C');
+  if (rights.length) checks.push({ ok: true, text: '直角があります（' + rights.join('・') + '＝90°）', detail: '直角三角形になっています。三平方の定理が使えます' });
+  else checks.push({ ok: false, info: true, text: '直角はまだありません', detail: 'どれか1つの角が 90° になるように動かしてみましょう' });
+  return checks;
+}
+function triScene(extra) {
+  const { A, B, C } = S.pts;
+  const sc = sceneBase();
+  sc.polys.push({ pts: [A, B, C], fill: 'var(--fig-fill)', stroke: 'var(--fig-stroke)', w: 3 });
+  if (extra) extra(sc, A, B, C);
+  ['A', 'B', 'C'].forEach(n => sc.points.push({ name: n, p: S.pts[n], drag: 'free' }));
+  return sc;
+}
+
+const BUILDERS = {
+  /* ---------- 三角形 ---------- */
+  'tri'() {
+    const { A, B, C } = S.pts;
+    const m = triMeasures(A, B, C);
+    return {
+      scene: triScene((sc) => {
+        if (eqDeg(m.aB, 90)) sc.arcs.push({ at: B, p1: A, p2: C, right: true });
+      }),
+      measures: [
+        ['辺 AB', fmt(m.ab)], ['辺 BC', fmt(m.bc)], ['辺 CA', fmt(m.ca)],
+        ['∠A', fmt(m.aA) + '°'], ['∠B', fmt(m.aB) + '°'], ['∠C', fmt(m.aC) + '°'],
+        ['周りの長さ', fmt(m.per)], ['面積', fmt(m.area)]
+      ],
+      checks: triChecks(m),
+      seeds: ['頂点を1つ動かして、「変わらないもの」を探そう', '内角の和はいつも何度になる？', '直角や二等辺三角形になるのは、頂点がどんな位置のとき？'],
+      summary: `辺AB＝${fmt(m.ab)}、BC＝${fmt(m.bc)}、CA＝${fmt(m.ca)}、∠A＝${fmt(m.aA)}°、∠B＝${fmt(m.aB)}°、∠C＝${fmt(m.aC)}°、面積＝${fmt(m.area)}`
+    };
+  },
+  /* ---------- 三角形と内接円 ---------- */
+  'tri-in'() {
+    const { A, B, C } = S.pts;
+    const m = triMeasures(A, B, C);
+    const ic = incircle(A, B, C);
+    const scene = triScene((sc) => {
+      if (!ic) return;
+      const I = { x: ic.x, y: ic.y };
+      sc.circles.push({ c: I, r: ic.r, stroke: '#dc2626', w: 2.5 });
+      [[A, B], [B, C], [C, A]].forEach(([p, q]) => {
+        const f = footToLine(I, p, q);
+        sc.segs.push({ p1: I, p2: f.foot, stroke: '#dc2626', w: 1.5, dash: '5 4' });
+      });
+      sc.points.push({ name: 'I', p: I, drag: null, color: '#dc2626', label: '内心 I' });
+    });
+    const checks = triChecks(m);
+    if (ic) {
+      const ds = [[A, B], [B, C], [C, A]].map(([p, q]) => footToLine({ x: ic.x, y: ic.y }, p, q).dist);
+      checks.push({ ok: ds.every(d => eq(d, ic.r)), text: '内心から3辺までの距離が等しい', detail: `辺BCまで ${fmt(ds[1])}、辺CAまで ${fmt(ds[2])}、辺ABまで ${fmt(ds[0])} ― すべて内接円の半径 r＝${fmt(ic.r)} と等しい` });
+      checks.push({ ok: true, text: '半径は r ＝ 2×面積 ÷ 周りの長さ で求まる', detail: `2×${fmt(m.area)} ÷ ${fmt(m.per)} ＝ ${fmt(2 * m.area / m.per)}` });
+    }
+    return {
+      scene,
+      measures: [
+        ['辺 AB', fmt(m.ab)], ['辺 BC', fmt(m.bc)], ['辺 CA', fmt(m.ca)],
+        ['∠A', fmt(m.aA) + '°'], ['∠B', fmt(m.aB) + '°'], ['∠C', fmt(m.aC) + '°'],
+        ['面積', fmt(m.area)], ['内接円の半径 r', ic ? fmt(ic.r) : '―']
+      ],
+      checks,
+      seeds: ['頂点Cを遠くへ動かすと、内接円の半径はどうなる？', '内接円は、いつも三角形の内側にある？　外に出ることはある？', '内心は、3つの角の二等分線が集まる点でもあるよ'],
+      summary: `辺AB＝${fmt(m.ab)}、BC＝${fmt(m.bc)}、CA＝${fmt(m.ca)}、面積＝${fmt(m.area)}、内接円の半径 r＝${ic ? fmt(ic.r) : '―'}`
+    };
+  },
+  /* ---------- 三角形と外接円 ---------- */
+  'tri-circum'() {
+    const { A, B, C } = S.pts;
+    const m = triMeasures(A, B, C);
+    const cc = circumcircle(A, B, C);
+    const scene = triScene((sc) => {
+      if (!cc) return;
+      const O = { x: cc.x, y: cc.y };
+      sc.circles.push({ c: O, r: cc.r, stroke: '#0891b2', w: 2.5 });
+      [A, B, C].forEach(p => sc.segs.push({ p1: O, p2: p, stroke: '#0891b2', w: 1.5, dash: '5 4' }));
+      sc.points.push({ name: 'O', p: O, drag: null, color: '#0891b2', label: '外心 O' });
+    });
+    const checks = triChecks(m);
+    if (cc) {
+      const O = { x: cc.x, y: cc.y };
+      checks.push({ ok: true, text: '外心から3頂点までの距離が等しい', detail: `OA＝${fmt(d2(O, A))}、OB＝${fmt(d2(O, B))}、OC＝${fmt(d2(O, C))} ― すべて外接円の半径 R＝${fmt(cc.r)}` });
+      if (eqDeg(m.aB, 90)) {
+        const mid = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
+        checks.push({ ok: eq(d2(O, mid), 0, 0.05), text: '直角三角形では、外心は斜辺の中点に来る', detail: '∠B＝90° のとき、斜辺 AC の中点と外心 O が重なります' });
+      }
+      const inside = (() => {
+        const s1 = (B.x - A.x) * (O.y - A.y) - (B.y - A.y) * (O.x - A.x);
+        const s2 = (C.x - B.x) * (O.y - B.y) - (C.y - B.y) * (O.x - B.x);
+        const s3 = (A.x - C.x) * (O.y - C.y) - (A.y - C.y) * (O.x - C.x);
+        return (s1 > 0 && s2 > 0 && s3 > 0) || (s1 < 0 && s2 < 0 && s3 < 0);
+      })();
+      checks.push({ ok: false, info: true, text: inside ? 'いま外心は三角形の内側にあります' : 'いま外心は三角形の外側にあります', detail: '鈍角（90°より大きい角）があると、外心は外側へ出ます' });
+    }
+    return {
+      scene,
+      measures: [
+        ['辺 AB', fmt(m.ab)], ['辺 BC', fmt(m.bc)], ['辺 CA', fmt(m.ca)],
+        ['∠A', fmt(m.aA) + '°'], ['∠B', fmt(m.aB) + '°'], ['∠C', fmt(m.aC) + '°'],
+        ['面積', fmt(m.area)], ['外接円の半径 R', cc ? fmt(cc.r) : '―']
+      ],
+      checks,
+      seeds: ['直角三角形にすると、外心はどこへ来る？', '鈍角三角形では外心はどこへ行く？　鋭角三角形では？', '外心は、3辺の垂直二等分線が集まる点でもあるよ'],
+      summary: `辺AB＝${fmt(m.ab)}、BC＝${fmt(m.bc)}、CA＝${fmt(m.ca)}、∠A＝${fmt(m.aA)}°、∠B＝${fmt(m.aB)}°、∠C＝${fmt(m.aC)}°、外接円の半径 R＝${cc ? fmt(cc.r) : '―'}`
+    };
+  },
+  /* ---------- 四角形 ---------- */
+  'quad'() {
+    const { A, B, C, D } = S.pts;
+    const ab = d2(A, B), bc = d2(B, C), cd = d2(C, D), da = d2(D, A);
+    const ac = d2(A, C), bd = d2(B, D);
+    const aA = angleAt(A, D, B), aB = angleAt(B, A, C), aC = angleAt(C, B, D), aD = angleAt(D, C, A);
+    const midAC = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
+    const midBD = { x: (B.x + D.x) / 2, y: (B.y + D.y) / 2 };
+    const midGap = d2(midAC, midBD);
+    const cross = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    const parAB = Math.abs(cross(A, B, { x: B.x + (C.x - D.x), y: B.y + (C.y - D.y) })) < 0.15 || Math.abs((B.x - A.x) * (D.y - C.y) - (B.y - A.y) * (D.x - C.x)) < 0.15;
+    const parBC = Math.abs((C.x - B.x) * (A.y - D.y) - (C.y - B.y) * (A.x - D.x)) < 0.15;
+    const sc = sceneBase();
+    sc.polys.push({ pts: [A, B, C, D], fill: 'var(--fig-fill)', stroke: 'var(--fig-stroke)', w: 3 });
+    sc.segs.push({ p1: A, p2: C, stroke: '#94a3b8', w: 1.5, dash: '6 4' });
+    sc.segs.push({ p1: B, p2: D, stroke: '#94a3b8', w: 1.5, dash: '6 4' });
+    sc.points.push({ name: 'M', p: midAC, drag: null, color: '#64748b', r: 4, label: '' });
+    ['A', 'B', 'C', 'D'].forEach(n => sc.points.push({ name: n, p: S.pts[n], drag: 'free' }));
+    const isPara = eq(ab, cd) && eq(bc, da) && eqDeg(aA, aC) && eqDeg(aB, aD) && midGap <= 0.08;
+    const checks = [
+      { ok: eq(ab, cd) && eq(bc, da), text: '向かい合う辺（対辺）の長さが等しい', detail: `AB＝${fmt(ab)} と CD＝${fmt(cd)}、BC＝${fmt(bc)} と DA＝${fmt(da)}` },
+      { ok: eqDeg(aA, aC) && eqDeg(aB, aD), text: '向かい合う角（対角）の大きさが等しい', detail: `∠A＝${fmt(aA)}° と ∠C＝${fmt(aC)}°、∠B＝${fmt(aB)}° と ∠D＝${fmt(aD)}°` },
+      { ok: midGap <= 0.08, text: '対角線はたがいの真ん中で交わる', detail: midGap <= 0.08 ? '2本の対角線の中点が重なっています' : `2本の対角線の中点は ${fmt(midGap)} ずれています` },
+      { ok: parAB && parBC, text: '向かい合う辺がそれぞれ平行', detail: (parAB ? 'AB ∥ CD' : 'AB と CD は平行でない') + '、' + (parBC ? 'BC ∥ DA' : 'BC と DA は平行でない') },
+      { ok: isPara, text: isPara ? 'いまの形は平行四辺形です' : '平行四辺形の性質がそろうと、平行四辺形と認められます', detail: '上の4つがすべて ✓ になると平行四辺形です' },
+      { ok: eqDeg(aA + aB + aC + aD, 360), text: '内角の和は 360°', detail: `いま ${fmt(aA)}°＋${fmt(aB)}°＋${fmt(aC)}°＋${fmt(aD)}° ＝ ${fmt(aA + aB + aC + aD)}°` }
+    ];
+    return {
+      scene: sc,
+      measures: [
+        ['辺 AB', fmt(ab)], ['辺 BC', fmt(bc)], ['辺 CD', fmt(cd)], ['辺 DA', fmt(da)],
+        ['∠A', fmt(aA) + '°'], ['∠B', fmt(aB) + '°'], ['∠C', fmt(aC) + '°'], ['∠D', fmt(aD) + '°'],
+        ['対角線 AC', fmt(ac)], ['対角線 BD', fmt(bd)], ['面積', fmt(polyArea([A, B, C, D]))]
+      ],
+      checks,
+      seeds: ['平行四辺形のまま頂点を動かせる？　どこを動かすと崩れる？', '長方形やひし形は、平行四辺形の特別な場合だといえる？', '対角線が真ん中で交わるのは、どんな四角形のとき？'],
+      summary: `辺AB＝${fmt(ab)}、BC＝${fmt(bc)}、CD＝${fmt(cd)}、DA＝${fmt(da)}、対角線AC＝${fmt(ac)}、BD＝${fmt(bd)}、面積＝${fmt(polyArea([A, B, C, D]))}`
+    };
+  },
+  /* ---------- 正多角形 ---------- */
+  'regular'() {
+    const p = S.params['regular'];
+    const n = p.n, R = p.radius;
+    const O = { x: 0, y: 0 };
+    const verts = [];
+    for (let i = 0; i < n; i++) {
+      const th = Math.PI / 2 + i * 2 * Math.PI / n;
+      verts.push({ name: 'P' + (i + 1), x: R * Math.cos(th), y: R * Math.sin(th) });
+    }
+    const side = d2(verts[0], verts[1]);
+    const inner = (n - 2) * 180 / n;
+    const area = n / 2 * R * R * Math.sin(2 * Math.PI / n);
+    const diag = n * (n - 3) / 2;
+    const sc = sceneBase();
+    sc.circles.push({ c: O, r: R, stroke: '#94a3b8', w: 1.5, dash: '6 4' });
+    sc.polys.push({ pts: verts, fill: 'var(--fig-fill)', stroke: 'var(--fig-stroke)', w: 3 });
+    const mid01 = { x: (verts[0].x + verts[1].x) / 2, y: (verts[0].y + verts[1].y) / 2 };
+    sc.segs.push({ p1: O, p2: mid01, stroke: '#94a3b8', w: 1.5, dash: '5 4' });
+    verts.forEach(v => sc.points.push({ name: v.name, p: v, drag: 'radial', noLabel: true, r: 8 }));
+    sc.points.push({ name: 'O', p: O, drag: null, color: '#64748b', label: '中心' });
+    return {
+      scene: sc,
+      measures: [
+        ['辺の数 n', String(n)], ['一辺の長さ', fmt(side)], ['1つの内角', fmt(inner) + '°'],
+        ['内角の和', fmt((n - 2) * 180) + '°'], ['中心角（360°÷n）', fmt(360 / n) + '°'],
+        ['対角線の本数', String(diag)], ['周りの長さ', fmt(side * n)], ['面積', fmt(area)]
+      ],
+      checks: [
+        { ok: true, text: `すべての辺が等しい（一辺 ${fmt(side)}）`, detail: '正多角形の定義そのものです' },
+        { ok: true, text: `すべての内角が等しい（1つ ${fmt(inner)}°）`, detail: `内角の和は (n－2)×180° ＝ ${fmt((n - 2) * 180)}°` },
+        { ok: true, text: 'すべての頂点が1つの円（外接円）の上にある', detail: `中心から頂点までの距離はすべて ${fmt(R)}` },
+        { ok: false, info: true, text: `対角線は全部で ${diag} 本`, detail: 'n を変えると本数がどう増えるか、確かめてみましょう' }
+      ],
+      seeds: ['n を大きくしていくと、形は円に近づくね。周りの長さと円周（2π×半径）を比べてみよう', '対角線の本数は、n が1つ増えると何本増える？', '正三角形・正方形・正五角形で、内角はどう増えていく？'],
+      summary: `正${n}角形：一辺＝${fmt(side)}、1つの内角＝${fmt(inner)}°、対角線＝${diag}本、面積＝${fmt(area)}`
+    };
+  },
+  /* ---------- 三平方の定理 ---------- */
+  'pyth'() {
+    const { A, B, C } = S.pts;
+    const m = triMeasures(A, B, C);
+    const sqAB = squareOutward(A, B, C), sqBC = squareOutward(B, C, A), sqCA = squareOutward(C, A, B);
+    const sc = sceneBase();
+    sc.polys.push({ pts: sqBC, fill: '#fef3c7', stroke: '#d97706', w: 2 });
+    sc.polys.push({ pts: sqCA, fill: '#dbeafe', stroke: '#2563eb', w: 2 });
+    sc.polys.push({ pts: sqAB, fill: '#dcfce7', stroke: '#16a34a', w: 2 });
+    sc.polys.push({ pts: [A, B, C], fill: '#fff7ed', stroke: 'var(--fig-stroke)', w: 3 });
+    const ctr = q => centroid(q);
+    sc.labels.push({ p: ctr(sqBC), text: fmt(m.bc * m.bc), cls: 'area' });
+    sc.labels.push({ p: ctr(sqCA), text: fmt(m.ca * m.ca), cls: 'area' });
+    sc.labels.push({ p: ctr(sqAB), text: fmt(m.ab * m.ab), cls: 'area' });
+    ['A', 'B', 'C'].forEach(n => sc.points.push({ name: n, p: S.pts[n], drag: 'free' }));
+    const cands = [
+      { v: 'A', opp: m.bc, s1: m.ab, s2: m.ca, ang: m.aA, lab: 'BC', l1: 'AB', l2: 'CA' },
+      { v: 'B', opp: m.ca, s1: m.ab, s2: m.bc, ang: m.aB, lab: 'CA', l1: 'AB', l2: 'BC' },
+      { v: 'C', opp: m.ab, s1: m.bc, s2: m.ca, ang: m.aC, lab: 'AB', l1: 'BC', l2: 'CA' }
+    ];
+    const hit = cands.find(c => eq(c.opp * c.opp, c.s1 * c.s1 + c.s2 * c.s2, Math.max(1.2, c.opp * c.opp * 0.03)) && eqDeg(c.ang, 90));
+    const checks = [];
+    if (hit) {
+      checks.push({ ok: true, text: `三平方の定理が成り立っています（∠${hit.v}＝90°）`, detail: `${hit.l1}²＋${hit.l2}² ＝ ${fmt(hit.s1 * hit.s1)}＋${fmt(hit.s2 * hit.s2)} ＝ ${fmt(hit.s1 * hit.s1 + hit.s2 * hit.s2)}、${hit.lab}² ＝ ${fmt(hit.opp * hit.opp)}` });
+    } else {
+      checks.push({ ok: false, info: true, text: 'いまは直角がないので、三平方の定理の形にはなっていません', detail: `各辺の2乗は AB²＝${fmt(m.ab * m.ab)}、BC²＝${fmt(m.bc * m.bc)}、CA²＝${fmt(m.ca * m.ca)}。頂点を動かして、どれか1つの角を 90° にしてみましょう` });
+    }
+    checks.push({ ok: true, text: '正方形の面積は「辺×辺」＝ 辺の2乗', detail: '3つの正方形の面積が、そのまま a²、b²、c² になっています' });
+    return {
+      scene: sc,
+      measures: [
+        ['辺 AB', fmt(m.ab)], ['辺 BC', fmt(m.bc)], ['辺 CA', fmt(m.ca)],
+        ['AB²（正方形の面積）', fmt(m.ab * m.ab)], ['BC²（正方形の面積）', fmt(m.bc * m.bc)], ['CA²（正方形の面積）', fmt(m.ca * m.ca)],
+        ['∠A', fmt(m.aA) + '°'], ['∠B', fmt(m.aB) + '°'], ['∠C', fmt(m.aC) + '°']
+      ],
+      checks,
+      seeds: ['3-4-5 以外の直角三角形でも、正方形の面積の関係は成り立つ？', '斜辺の正方形の面積は、残り2つの合計と比べてどうなる？', '直角でない三角形では、合計と斜辺の2乗はどちらが大きい？'],
+      summary: `辺AB＝${fmt(m.ab)}、BC＝${fmt(m.bc)}、CA＝${fmt(m.ca)}、AB²＝${fmt(m.ab * m.ab)}、BC²＝${fmt(m.bc * m.bc)}、CA²＝${fmt(m.ca * m.ca)}、∠A＝${fmt(m.aA)}°、∠B＝${fmt(m.aB)}°、∠C＝${fmt(m.aC)}°`,
+      rootData: { hit, m }
+    };
+  },
+  /* ---------- 相似・拡大図 ---------- */
+  'similar'() {
+    const k = S.params['similar'].k;
+    const { A, B, C } = S.pts;
+    const xs = [A.x, B.x, C.x], spanX = Math.max(...xs) - Math.min(...xs);
+    const dx = spanX + 2.4;
+    const A2 = { x: A.x + dx, y: A.y };
+    const map = p => ({ x: A2.x + (p.x - A.x) * k, y: A2.y + (p.y - A.y) * k });
+    const B2 = map(B), C2 = map(C);
+    const m1 = triMeasures(A, B, C), m2 = triMeasures(A2, B2, C2);
+    const sc = sceneBase();
+    sc.polys.push({ pts: [A, B, C], fill: 'var(--fig-fill)', stroke: 'var(--fig-stroke)', w: 3 });
+    sc.polys.push({ pts: [A2, B2, C2], fill: '#ffedd5', stroke: '#ea580c', w: 3 });
+    [[A, A2], [B, B2], [C, C2]].forEach(([p, q]) => sc.segs.push({ p1: p, p2: q, stroke: '#94a3b8', w: 1.2, dash: '4 4' }));
+    ['A', 'B', 'C'].forEach(n => sc.points.push({ name: n, p: S.pts[n], drag: 'free' }));
+    sc.points.push({ name: "A'", p: A2, drag: null, color: '#ea580c' });
+    sc.points.push({ name: "B'", p: B2, drag: null, color: '#ea580c' });
+    sc.points.push({ name: "C'", p: C2, drag: null, color: '#ea580c' });
+    const ratioOk = eq(m2.ab / m1.ab, k, 0.03) && eq(m2.bc / m1.bc, k, 0.03) && eq(m2.ca / m1.ca, k, 0.03);
+    return {
+      scene: sc,
+      measures: [
+        ['元の辺 AB', fmt(m1.ab)], ['元の辺 BC', fmt(m1.bc)], ['元の辺 CA', fmt(m1.ca)],
+        ["拡大図の辺 A'B'", fmt(m2.ab)], ["拡大図の辺 B'C'", fmt(m2.bc)], ["拡大図の辺 C'A'", fmt(m2.ca)],
+        ['倍率 k', fmt(k, 2)], ['元の面積', fmt(m1.area)], ['拡大図の面積', fmt(m2.area)], ['面積の比', fmt(m2.area / m1.area, 2) + ' 倍']
+      ],
+      checks: [
+        { ok: ratioOk, text: `対応する辺の比はすべて ${fmt(k, 2)}（＝k）`, detail: `A'B'÷AB＝${fmt(m2.ab / m1.ab, 2)}、B'C'÷BC＝${fmt(m2.bc / m1.bc, 2)}、C'A'÷CA＝${fmt(m2.ca / m1.ca, 2)}` },
+        { ok: eqDeg(m1.aA, m2.aA) && eqDeg(m1.aB, m2.aB) && eqDeg(m1.aC, m2.aC), text: '対応する角はすべて等しい', detail: `∠A＝∠A'＝${fmt(m1.aA)}°、∠B＝∠B'＝${fmt(m1.aB)}°、∠C＝∠C'＝${fmt(m1.aC)}°` },
+        { ok: true, text: `面積の比は k² ＝ ${fmt(k * k, 2)} 倍`, detail: `辺が ${fmt(k, 2)} 倍になると、面積は ${fmt(k * k, 2)} 倍になります` }
+      ],
+      seeds: ['k を 2 にすると、面積は何倍になる？　3 では？', '元の三角形をどんな形に変えても、拡大図との関係は変わらない？', '「形が同じ」とは、辺と角の言葉でどう言える？'],
+      summary: `元の三角形：AB＝${fmt(m1.ab)}、BC＝${fmt(m1.bc)}、CA＝${fmt(m1.ca)}、面積＝${fmt(m1.area)}。${fmt(k, 2)}倍の拡大図：A'B'＝${fmt(m2.ab)}、B'C'＝${fmt(m2.bc)}、C'A'＝${fmt(m2.ca)}、面積＝${fmt(m2.area)}`
+    };
+  },
+  /* ---------- 円周角の定理 ---------- */
+  'circle-angle'() {
+    const p = S.params['circle-angle'];
+    const R = p.radius, O = { x: 0, y: 0 };
+    const on = deg => ({ x: R * Math.cos(deg * Math.PI / 180), y: R * Math.sin(deg * Math.PI / 180) });
+    const A = on(p.thA), B = on(p.thB), P = on(p.thP);
+    const centralMinor = (() => {
+      let d = Math.abs(p.thA - p.thB) % 360;
+      return d > 180 ? 360 - d : d;
+    })();
+    const insc = angleAt(P, A, B);
+    const subCentral = Math.abs(2 * insc - centralMinor) < Math.abs(2 * insc - (360 - centralMinor)) ? centralMinor : 360 - centralMinor;
+    const sc = sceneBase();
+    sc.circles.push({ c: O, r: R, stroke: 'var(--fig-stroke)', w: 3 });
+    sc.segs.push({ p1: O, p2: A, stroke: '#94a3b8', w: 1.5, dash: '5 4' });
+    sc.segs.push({ p1: O, p2: B, stroke: '#94a3b8', w: 1.5, dash: '5 4' });
+    sc.segs.push({ p1: A, p2: P, stroke: '#dc2626', w: 2.5 });
+    sc.segs.push({ p1: P, p2: B, stroke: '#dc2626', w: 2.5 });
+    sc.arcs.push({ c: O, r: R, from: p.thB, to: p.thA, stroke: '#f59e0b', w: 6, major: subCentral > 180 });
+    sc.points.push({ name: 'O', p: O, drag: null, color: '#64748b', label: '中心 O' });
+    sc.points.push({ name: 'A', p: A, drag: 'circle' });
+    sc.points.push({ name: 'B', p: B, drag: 'circle' });
+    sc.points.push({ name: 'P', p: P, drag: 'circle', color: '#dc2626' });
+    return {
+      scene: sc,
+      measures: [
+        ['中心角 ∠AOB（小さい方）', fmt(centralMinor) + '°'],
+        ['Pと反対側の弧ABの中心角', fmt(subCentral) + '°'],
+        ['円周角 ∠APB', fmt(insc) + '°'],
+        ['円周角 × 2', fmt(2 * insc) + '°']
+      ],
+      checks: [
+        { ok: Math.abs(2 * insc - subCentral) <= 1.2, text: '円周角は、対する中心角の半分', detail: `∠APB×2 ＝ ${fmt(2 * insc)}°、中心角 ＝ ${fmt(subCentral)}°` },
+        { ok: false, info: true, text: 'P を同じ側の弧の上で動かすと、円周角は変わりません', detail: 'P を反対側の弧へ移すと、もう1つの円周角（180°から引いた値）になります' },
+        { ok: Math.abs(centralMinor - 180) <= 2, text: 'いま AB は直径です', detail: '直径の上に立つ円周角は 90° になります', hidden: Math.abs(centralMinor - 180) > 2 }
+      ].filter(c => !c.hidden),
+      seeds: ['P を円の上でぐるっと動かして、円周角が変わらない場所・変わる場所を探そう', 'AとBを直径の両端にすると、円周角は何度？', '中心角が 120° のとき、円周角は？　2か所あるはずだよ'],
+      summary: `中心角（Pと反対側の弧AB）＝${fmt(subCentral)}°、円周角∠APB＝${fmt(insc)}°`
+    };
+  }
+};
+
+/* ================================================================
+* 描画（数学座標 → SVG）
+* ================================================================ */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const VIEW_W = 800, VIEW_H = 540, MARGIN = 56;
+let view = { s: 40, ox: 400, oy: 270}; // 数学座標→SVG: X = x*s+ox, Y = -y*s+oy
+let lastBuilt = null;
+
+function svgEl(name, attrs, parent) {
+const n = document.createElementNS(SVGNS, name);
+for (const k in attrs) n.setAttribute(k, attrs[k]);
+if (parent) parent.appendChild(n);
+return n;
+}
+function render() {
+const built = BUILDERS[S.fig]();
+lastBuilt = built;
+const sc = built.scene;
+// ---- 描画範囲（数学座標）
+let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+const eat = p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);};
+sc.polys.forEach(pl => pl.pts.forEach(eat));
+sc.segs.forEach(sg => { eat(sg.p1); eat(sg.p2);});
+sc.circles.forEach(c => { eat({ x: c.c.x - c.r, y: c.c.y - c.r}); eat({ x: c.c.x + c.r, y: c.c.y + c.r});});
+sc.points.forEach(pt => eat(pt.p));
+sc.labels.forEach(l => eat(l.p));
+if (minX > maxX) { minX = -4; maxX = 4; minY = -3; maxY = 3;}
+const spanX = Math.max(maxX - minX, 0.1), spanY = Math.max(maxY - minY, 0.1);
+const AH = VIEW_H - 128; // 下部の計測バーに隠れないよう、描画域の下を空ける
+view.s = Math.min((VIEW_W - MARGIN * 2) / spanX, (AH - 48) / spanY);
+view.ox = VIEW_W / 2 - (minX + maxX) / 2 * view.s;
+view.oy = AH / 2 + (minY + maxY) / 2 * view.s;
+const X = x => x * view.s + view.ox, Y = y => -y * view.s + view.oy;
+
+const svg = $('board');
+svg.innerHTML = '';
+// グリッド
+const defs = svgEl('defs', {}, svg);
+const pat = svgEl('pattern', { id: 'grid', width: 26, height: 26, patternUnits: 'userSpaceOnUse'}, defs);
+svgEl('path', { d: 'M 26 0 L 0 0 0 26', fill: 'none', stroke: '#eef2f7', 'stroke-width': 1}, pat);
+svgEl('rect', { x: 0, y: 0, width: VIEW_W, height: VIEW_H, fill: 'url(#grid)'}, svg);
+const g = svgEl('g', {}, svg);
+
+sc.circles.forEach(c => svgEl('circle', { cx: X(c.c.x), cy: Y(c.c.y), r: c.r * view.s, fill: 'none', stroke: c.stroke, 'stroke-width': c.w || 2, 'stroke-dasharray': c.dash || ''}, g));
+sc.arcs.forEach(a => {
+if (a.right) { // 直角マーク
+const u = 15;
+const v1 = { x: a.p1.x - a.at.x, y: a.p1.y - a.at.y}, v2 = { x: a.p2.x - a.at.x, y: a.p2.y - a.at.y};
+const n1 = Math.hypot(v1.x, v1.y) || 1, n2 = Math.hypot(v2.x, v2.y) || 1;
+const pA = { x: X(a.at.x) + v1.x / n1 * u, y: Y(a.at.y) - v1.y / n1 * u};
+const pB = { x: X(a.at.x) + (v1.x / n1 + v2.x / n2) * u, y: Y(a.at.y) - (v1.y / n1 + v2.y / n2) * u};
+const pC = { x: X(a.at.x) + v2.x / n2 * u, y: Y(a.at.y) - v2.y / n2 * u};
+svgEl('path', { d: `M ${pA.x} ${pA.y} L ${pB.x} ${pB.y} L ${pC.x} ${pC.y}`, fill: 'none', stroke: '#0f172a', 'stroke-width': 2}, g);
+return;
+}
+// 円弧（数学角 from→to、反時計回り）
+let from = a.from, to = a.to;
+if (!a.major) { while (to < from) to += 360; if (to - from > 180) { const t = from; from = to - 360; to = t; while (to < from) to += 360;}}
+else { while (to < from) to += 360; if (to - from < 180) { const t = from; from = to; to = t + 360; while (to < from) to += 360; if (to - from < 180) to += 360;}}
+const p1 = { x: X(a.c.x + a.r * Math.cos(from * Math.PI / 180)), y: Y(a.c.y + a.r * Math.sin(from * Math.PI / 180))};
+const p2 = { x: X(a.c.x + a.r * Math.cos(to * Math.PI / 180)), y: Y(a.c.y + a.r * Math.sin(to * Math.PI / 180))};
+const large = (to - from) > 180? 1: 0;
+svgEl('path', { d: `M ${p1.x} ${p1.y} A ${a.r * view.s} ${a.r * view.s} 0 ${large} 0 ${p2.x} ${p2.y}`, fill: 'none', stroke: a.stroke, 'stroke-width': a.w || 5, 'stroke-linecap': 'round', opacity:.85}, g);
+});
+sc.polys.forEach(pl => svgEl('polygon', {
+points: pl.pts.map(p => X(p.x) + ',' + Y(p.y)).join(' '),
+fill: pl.fill, stroke: pl.stroke, 'stroke-width': pl.w || 2.5, 'stroke-linejoin': 'round', opacity:.95
+}, g));
+sc.segs.forEach(sg => svgEl('line', { x1: X(sg.p1.x), y1: Y(sg.p1.y), x2: X(sg.p2.x), y2: Y(sg.p2.y), stroke: sg.stroke, 'stroke-width': sg.w || 2, 'stroke-dasharray': sg.dash || ''}, g));
+sc.labels.forEach(l => {
+const t = svgEl('text', { x: X(l.p.x), y: Y(l.p.y), 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 21, 'font-weight': 700, fill: '#92400e'}, g);
+t.textContent = l.text;
+});
+// 辺の長さラベル
+if (S.showMeasures) drawSideLabels(g, sc, X, Y);
+// 頂点
+sc.points.forEach(pt => {
+const cx = X(pt.p.x), cy = Y(pt.p.y);
+const col = pt.color || 'var(--main)';
+const circle = svgEl('circle', { cx, cy, r: pt.r || 10, fill: col, stroke: '#fff', 'stroke-width': 2.5, style: pt.drag? 'cursor:grab;touch-action:none': ''}, g);
+if (pt.drag) attachDrag(circle, pt);
+if (!pt.noLabel) {
+const cen = centroid(sc.points.map(q => q.p));
+let dx = pt.p.x - cen.x, dy = pt.p.y - cen.y;
+const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+const t = svgEl('text', {
+x: cx + dx * 24, y: cy - dy * 24 + 6, 'text-anchor': 'middle',
+'font-size': 19, 'font-style': 'italic', 'font-weight': 700, fill: '#1e293b',
+'font-family': "'Times New Roman','Hiragino Mincho ProN',serif"
+}, g);
+t.textContent = pt.label || pt.name;
+}
+});
+updatePanels(built);
+}
+
+function drawSideLabels(g, sc, X, Y) {
+const drawn = new Set();
+const cen = centroid(sc.points.filter(p => p.drag).map(p => p.p).concat(sc.polys.length? sc.polys[0].pts: []));
+const label = (p, q, text) => {
+const key = [p.x.toFixed(2), p.y.toFixed(2), q.x.toFixed(2), q.y.toFixed(2)].join('|');
+if (drawn.has(key)) return; drawn.add(key);
+const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+let nx = -(q.y - p.y), ny = (q.x - p.x);
+const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
+if ((mx - cen.x) * nx + (my - cen.y) * ny < 0) { nx = -nx; ny = -ny;}
+const t = svgEl('text', {
+x: X(mx + nx * 17 / view.s), y: Y(my + ny * 17 / view.s),
+'text-anchor': 'middle', 'font-size': 15.5, 'font-weight': 700, fill: '#334155',
+'font-family': "'Times New Roman',serif"
+}, g);
+t.textContent = text;
+};
+// 三角形・四角形など主多角形の辺
+if (sc.polys.length) {
+const main = sc.polys[sc.polys.length - 1].pts.length >= 3? sc.polys[sc.polys.length - 1]: sc.polys[0];
+const pts = main.pts;
+for (let i = 0; i < pts.length; i++) {
+const p = pts[i], q = pts[(i + 1) % pts.length];
+label(p, q, fmt(d2(p, q)));
+}
+}
+}
+
+/* ---------- パネル更新 ---------- */
+function updatePanels(built) {
+$('measure-table').innerHTML = built.measures.map(([k, v]) => `<tr><td>${k}</td><td class="serif">${v}</td></tr>`).join('');
+$('check-list').innerHTML = built.checks.map(c => `
+<li class="${c.ok? 'ok': 'info'}">
+<span class="mark">${c.ok? '✓': '・'}</span>
+<span>${c.text}<span class="detail">${c.detail || ''}</span></span>
+</li>`).join('');
+$('seed-list').innerHTML = built.seeds.map(s => `<li>${s}</li>`).join('');
+$('measure-bar').innerHTML = '📏 ' + built.summary.replace(/、/g, ' ｜ ');
+if (S.mode === 'student') setSteps(2);
+renderExplain(built);
+}
+
+/* ---------- ドラッグ ---------- */
+function attachDrag(el, pt) {
+el.addEventListener('pointerdown', e => {
+e.preventDefault();
+try { el.setPointerCapture(e.pointerId);} catch (_) {}
+const svg = $('board');
+const toMath = ev => {
+const rect = svg.getBoundingClientRect();
+const sx = (ev.clientX - rect.left) / rect.width * VIEW_W;
+const sy = (ev.clientY - rect.top) / rect.height * VIEW_H;
+return { x: (sx - view.ox) / view.s, y: -(sy - view.oy) / view.s};
+};
+const move = ev => {
+const m = toMath(ev);
+if (pt.drag === 'free') {
+S.pts[pt.name] = { x: Math.max(-30, Math.min(30, m.x)), y: Math.max(-30, Math.min(30, m.y))};
+} else if (pt.drag === 'circle') {
+const p = S.params['circle-angle'];
+const ang = Math.atan2(m.y, m.x) * 180 / Math.PI;
+const deg = (ang + 360) % 360;
+if (pt.name === 'A') p.thA = deg; else if (pt.name === 'B') p.thB = deg; else p.thP = deg;
+} else if (pt.drag === 'radial') {
+const p = S.params['regular'];
+p.radius = Math.max(1, Math.min(9, Math.hypot(m.x, m.y)));
+const inp = $('param-radius'); if (inp) inp.value = fmt(p.radius);
+}
+render();
+};
+const up = () => {
+el.removeEventListener('pointermove', move);
+el.removeEventListener('pointerup', up);
+el.removeEventListener('pointercancel', up);
+};
+el.addEventListener('pointermove', move);
+el.addEventListener('pointerup', up);
+el.addEventListener('pointercancel', up);
+});
+}
+
+/* ================================================================
+* 数値パラメータUI
+* ================================================================ */
+function buildParamUI() {
+const area = $('param-area');
+const key = S.fig, p = S.params[key];
+const num = (id, label, val, step = '0.5', min = '0.5', max = '12') =>
+`<label>${label}<input type="number" id="${id}" value="${val}" step="${step}" min="${min}" max="${max}" /></label>`;
+let html = '';
+if (key === 'tri') {
+html = `<div class="param-row">
+<label>三角形の種類<select id="param-subtype">
+<option value="right" ${p.subtype === 'right'? 'selected': ''}>直角三角形</option>
+<option value="iso" ${p.subtype === 'iso'? 'selected': ''}>二等辺三角形</option>
+<option value="equi" ${p.subtype === 'equi'? 'selected': ''}>正三角形</option>
+<option value="free" ${p.subtype === 'free'? 'selected': ''}>自由な三角形</option>
+</select></label>
+${num('param-base', '底辺', p.base)}${num('param-height', '高さ', p.height)}
+<button class="btn sub" id="param-apply" type="button">この数値で作り直す</button></div>
+<p class="hint">作り直したあとは、頂点を自由に動かして変形できます。</p>`;
+} else if (key === 'tri-in' || key === 'tri-circum') {
+html = `<div class="param-row">${num('param-base', '底辺', p.base)}${num('param-height', '高さ', p.height)}
+<button class="btn sub" id="param-apply" type="button">この数値で作り直す</button></div>`;
+} else if (key === 'quad') {
+html = `<div class="param-row"><label>四角形の種類<select id="param-subtype">
+<option value="para" ${p.subtype === 'para'? 'selected': ''}>平行四辺形</option>
+<option value="rect" ${p.subtype === 'rect'? 'selected': ''}>長方形</option>
+<option value="square" ${p.subtype === 'square'? 'selected': ''}>正方形</option>
+<option value="rhom" ${p.subtype === 'rhom'? 'selected': ''}>ひし形</option>
+<option value="trap" ${p.subtype === 'trap'? 'selected': ''}>台形</option>
+</select></label>
+<button class="btn sub" id="param-apply" type="button">この形にする</button></div>
+<p class="hint">頂点を動かすと性質がどう崩れるか・保たれるかを、右のチェックで確かめられます。</p>`;
+} else if (key === 'regular') {
+html = `<div class="param-row"><label>辺の数 n<select id="param-n">${Array.from({ length: 10}, (_, i) => i + 3).map(n => `<option value="${n}" ${p.n === n? 'selected': ''}>${n}</option>`).join('')}</select></label>
+${num('param-radius', '外接円の半径', p.radius)}</div>
+<p class="hint">頂点をドラッグしても、正多角形のまま大きさだけ変わります。</p>`;
+} else if (key === 'pyth') {
+html = `<div class="param-row">${num('param-base', '横の辺', p.base)}${num('param-height', '縦の辺', p.height)}
+<button class="btn sub" id="param-apply" type="button">この数値で作り直す</button></div>
+<p class="hint">最初は直角三角形です。頂点を動かすと正方形も一緒に変形します。</p>`;
+} else if (key === 'similar') {
+html = `<div class="param-row">${num('param-k', '倍率 k', p.k, '0.1', '0.3', '3')}</div>
+<p class="hint">倍率を変えると拡大図（縮小図）が作り直されます。元の三角形はドラッグで変形できます。</p>`;
+} else if (key === 'circle-angle') {
+html = `<div class="param-row">${num('param-radius', '円の半径', p.radius)}</div>
+<p class="hint">A・B・P は円の上だけを動けます。P の位置で円周角がどうなるか観察しましょう。</p>`;
+}
+area.innerHTML = html;
+const apply = $('param-apply');
+if (apply) apply.addEventListener('click', () => {
+if ($('param-subtype')) p.subtype = $('param-subtype').value;
+if ($('param-base')) p.base = Math.max(0.5, parseFloat($('param-base').value) || p.base);
+if ($('param-height')) p.height = Math.max(0.5, parseFloat($('param-height').value) || p.height);
+initFigure(key);
+toast('図形を作り直しました');
+});
+const sel = $('param-subtype');
+if (sel && key === 'quad') sel.addEventListener('change', () => { p.subtype = sel.value; initFigure(key);});
+const nSel = $('param-n');
+if (nSel) nSel.addEventListener('change', () => { p.n = parseInt(nSel.value, 10); render();});
+const rad = $('param-radius');
+if (rad) rad.addEventListener('change', () => { p.radius = Math.max(0.8, parseFloat(rad.value) || p.radius); render();});
+const kInp = $('param-k');
+if (kInp) kInp.addEventListener('change', () => { p.k = Math.max(0.3, Math.min(3, parseFloat(kInp.value) || p.k)); render();});
+}
+
+/* ---------- 指示文から図形を選ぶ（決定的キーワード判定） ---------- */
+function pickByPrompt(text) {
+const t = text || '';
+const has = (...ws) => ws.some(w => t.includes(w));
+if (has('三平方', 'ピタゴラス')) return initFigure('pyth');
+if (has('内接円')) return initFigure('tri-in');
+if (has('外接円')) return initFigure('tri-circum');
+if (has('円周角', '中心角')) return initFigure('circle-angle');
+if (has('拡大', '縮小', '相似')) return initFigure('similar');
+const gon = t.match(/正([三四五六七八九十]+)角形/);
+if (gon || has('正多角形')) {
+const map = { '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
+S.params['regular'] = S.params['regular'] || { n: 6, radius: 3};
+if (gon && map[gon[1]]) S.params['regular'].n = map[gon[1]];
+return initFigure('regular');
+}
+if (has('平行四辺形')) { S.params['quad'] = { subtype: 'para'}; return initFigure('quad');}
+if (has('長方形')) { S.params['quad'] = { subtype: 'rect'}; return initFigure('quad');}
+if (has('正方形')) { S.params['quad'] = { subtype: 'square'}; return initFigure('quad');}
+if (has('ひし形', '菱形')) { S.params['quad'] = { subtype: 'rhom'}; return initFigure('quad');}
+if (has('台形')) { S.params['quad'] = { subtype: 'trap'}; return initFigure('quad');}
+if (has('四角形')) return initFigure('quad');
+if (has('二等辺')) { S.params['tri'] = { subtype: 'iso', base: 4, height: 3}; return initFigure('tri');}
+if (has('正三角形')) { S.params['tri'] = { subtype: 'equi', base: 4, height: 3}; return initFigure('tri');}
+if (has('三角形')) return initFigure('tri');
+toast('図形名が見つかりませんでした。メニューから選んでください');
+}
+
+/* ================================================================
+* 解説（決定論テンプレート）・チャット・AI
+* ================================================================ */
+function numbersBlock(built) {
+return `図形：${FIG_TITLE[S.fig]}\n計測値：${built.summary}`;
+}
+function renderExplain(built) {
+const seeds = built.seeds.map(s => `<li>${s}</li>`).join('');
+$('explain-body').innerHTML = `
+<h3>📐 ${FIG_TITLE[S.fig]}を描きました</h3>
+<p class="serif">${built.summary}</p>
+<h3>🔍 観察してみよう</h3>
+<ul style="margin:4px 0;padding-left:20px">${seeds}</ul>
+<p>頂点をドラッグして、「変わるもの」と「変わらないもの」をメモに書き出してみましょう。変わらないものが、その図形の<strong>性質</strong>や<strong>定理</strong>です。</p>`;
+$('ai-explain').style.display = geminiKey()? '': 'none';
+}
+function addChat(text, who) {
+const log = $('chat-log');
+const div = document.createElement('div');
+div.className = 'bubble ' + who;
+div.textContent = text;
+log.appendChild(div);
+log.scrollTop = log.scrollHeight;
+}
+function templateChatReply(msg, built) {
+return `いい質問ですね。「${msg}」について、まず図形を観察してみましょう。\n\nいまの数値：${built.summary}\n\n・頂点をドラッグして、変わるもの・変わらないものを2つずつ書き出してみよう。\n・気づいたことを、数値を使って説明してみよう。`;
+}
+function geminiKey() { return localStorage.getItem('gel-gemini-key') || '';}
+async function geminiGenerate(system, user) {
+const key = geminiKey();
+if (!key) throw new Error('キーがありません');
+const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key), {
+method: 'POST',
+headers: { 'Content-Type': 'application/json'},
+body: JSON.stringify({
+systemInstruction: { parts: [{ text: system}]},
+contents: [{ parts: [{ text: user}]}]
+})
+});
+if (!res.ok) throw new Error('AIの呼び出しに失敗しました（' + res.status + '）');
+const data = await res.json();
+const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
+return parts.map(p => p.text || '').join('');
+}
+
+/* ================================================================
+* 教師モード：指導案・ワークシート
+* ================================================================ */
+function unitName() {
+const v = ($('unit-input').value || '').trim();
+return v || FIG_LIST.find(f => f.key === S.fig).unit;
+}
+function gradeName() { return $('grade-select').value;}
+function lessonPlanData(built) {
+const unit = unitName(), grade = gradeName(), title = FIG_TITLE[S.fig];
+return {
+unit, grade, title,
+summary: built.summary,
+goals: [
+'知識・技能：図形の構成要素と計測値を正確に読み取り、性質を数値で確かめることができる。',
+'思考・判断・表現：頂点を動かしたときの変化と不変を観察し、根拠（数値）と結論を結びつけて説明できる。',
+'主体的に学習に取り組む態度：計測値を手がかりに自ら問いを立て、探求しようとする。'
+],
+flow: [
+['5分', '導入・課題把握', '図形探求ラボを投影し、本時の問い（変わるもの／変わらないもの）を共有する'],
+['25分', '個人探求・ペア対話', '頂点をドラッグして変化を観察させ、気づきメモに数値とともに書かせる'],
+['10分', '全体共有', '代表の気づきを板書し、定義・性質・定理へ練り上げる'],
+['5分', 'まとめ・振り返り', 'ワークシートで確認し、自己評価する']
+],
+criterion: '図形の性質を計測値と結びつけて説明している（思考・判断・表現）。'
+};
+}
+function lessonHtml(d) {
+return `<h3>学習指導案（${d.grade}）</h3>
+<h4>1. 単元・題材</h4><p>${d.unit} ― ${d.title}（図形探求ラボ使用）</p>
+<h4>2. 教材の数値（正確な計測値）</h4><p class="serif">${d.summary}</p>
+<h4>3. 目標（3観点）</h4><ul>${d.goals.map(g => `<li>${g}</li>`).join('')}</ul>
+<h4>4. 展開（45分）</h4>
+<table><tr><th>時間</th><th>活動</th><th>教師の支援</th></tr>
+${d.flow.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
+<h4>5. 評価規準</h4><p>${d.criterion}</p>`;
+}
+function lessonText(d) {
+return `# 学習指導案（${d.grade}）\n\n## 1. 単元・題材\n${d.unit} ― ${d.title}（図形探求ラボ使用）\n\n## 2. 教材の数値\n${d.summary}\n\n## 3. 目標（3観点）\n${d.goals.map(g => '- ' + g).join('\n')}\n\n## 4. 展開（45分）\n${d.flow.map(r => `| ${r[0]} | ${r[1]} | ${r[2]} |`).join('\n')}\n\n## 5. 評価規準\n${d.criterion}`;
+}
+function worksheetData(built) {
+const m = {}; built.measures.forEach(([k, v]) => m[k] = v);
+let q, a;
+if (S.fig === 'pyth' && built.rootData) {
+const { hit, m: tm} = built.rootData;
+if (hit) {
+const hyp = Math.sqrt(hit.s1 * hit.s1 + hit.s2 * hit.s2);
+q = [`直角をはさむ2辺が ${fmt(hit.s1)} と ${fmt(hit.s2)} の直角三角形で、斜辺の長さを求めなさい。`,
+'3つの正方形の面積の関係を、式で表しなさい。',
+'頂点を動かして別の直角三角形を作り、三平方の定理が成り立つことを数値で確かめなさい。'];
+a = [`斜辺 ＝ √(${fmt(hit.s1)}²＋${fmt(hit.s2)}²) ＝ √${fmt(hit.s1 * hit.s1 + hit.s2 * hit.s2)} ＝ ${fmt(hyp)}`,
+`${hit.l1}²＋${hit.l2}² ＝ ${hit.lab}²（${fmt(hit.s1 * hit.s1)}＋${fmt(hit.s2 * hit.s2)} ＝ ${fmt(hit.opp * hit.opp)}）`,
+'（例）どの直角三角形でも、斜辺の2乗が他の2辺の2乗の和に等しくなる。'];
+}
+}
+if (!q) {
+q = [`図の${FIG_TITLE[S.fig]}について、いま表示されている計測値を読み取りなさい。（辺・角度・面積）`,
+'頂点を動かすと変わる量と、変わらない量を、それぞれ2つずつ書きなさい。',
+'変わらない量について、なぜそうなるのかを数値を使って説明しなさい。'];
+a = [`（計測値）${built.summary}`,
+'（例）辺の長さや面積は変わるが、性質チェックで ✓ になった関係は変わらない。',
+'（例）性質が成り立つ理由を、定義や既に学んだ定理と結びつけて説明する。'];
+}
+const rubric = [
+['知識・技能', '計測値を正確に読み取れる', '概ね読み取れる', '読み取りに支援が必要'],
+['思考・判断・表現', '根拠（数値）と結論を結びつけて説明できる', '根拠に触れて説明できる', '説明に支援が必要'],
+['主体的に学習に取り組む態度', '自ら問いを立て探求する', '促されれば探求する', '促しても取り組めない']
+];
+return { q, a, rubric, unit: unitName(), title: FIG_TITLE[S.fig]};
+}
+function worksheetHtml(d) {
+return `<h3>ワークシート ― ${d.unit}（${d.title}）</h3>
+<h4>問い</h4>${d.q.map((t, i) => `<p>問${i + 1}. ${t}</p>`).join('')}
+<h4>解答</h4>${d.a.map((t, i) => `<p>問${i + 1}. ${t}</p>`).join('')}
+<h4>評価基準（3観点ルーブリック）</h4>
+<table><tr><th>観点</th><th>A（十分満足）</th><th>B（おおむね満足）</th><th>C（要支援）</th></tr>
+${d.rubric.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>`;
+}
+function worksheetText(d) {
+return `# ワークシート ― ${d.unit}（${d.title}）\n\n## 問い\n${d.q.map((t, i) => `問${i + 1}. ${t}`).join('\n')}\n\n## 解答\n${d.a.map((t, i) => `問${i + 1}. ${t}`).join('\n')}\n\n## 評価基準（3観点ルーブリック）\n${d.rubric.map(r => `| ${r.join(' | ')} |`).join('\n')}`;
+}
+
+/* ================================================================
+* 印刷用図形（A4横）― アプリ内で画像を生成し、共有・保存する方式
+* ================================================================ */
+function buildPrintSvg() {
+const built = BUILDERS[S.fig]();
+const sc = built.scene;
+const W = 1123, H = 794, M = 60;
+let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+const eat = p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);};
+sc.polys.forEach(pl => pl.pts.forEach(eat));
+sc.segs.forEach(sg => { eat(sg.p1); eat(sg.p2);});
+sc.circles.forEach(c => { eat({ x: c.c.x - c.r, y: c.c.y - c.r}); eat({ x: c.c.x + c.r, y: c.c.y + c.r});});
+sc.points.forEach(pt => eat(pt.p));
+const s = Math.min((W - M * 2) / Math.max(maxX - minX, 0.1), (H - M * 2 - 60) / Math.max(maxY - minY, 0.1));
+const ox = W / 2 - (minX + maxX) / 2 * s, oy = (H + 50) / 2 + (minY + maxY) / 2 * s;
+const X = x => x * s + ox, Y = y => -y * s + oy;
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+out += `<rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>`;
+out += `<text x="${W / 2}" y="52" text-anchor="middle" font-size="30" font-weight="bold" fill="#0f172a" font-family="sans-serif">${esc(unitName())} ― ${esc(FIG_TITLE[S.fig])}</text>`;
+sc.circles.forEach(c => out += `<circle cx="${X(c.c.x)}" cy="${Y(c.c.y)}" r="${c.r * s}" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-dasharray="${c.dash? '8 6': ''}"/>`);
+sc.polys.forEach(pl => out += `<polygon points="${pl.pts.map(p => X(p.x) + ',' + Y(p.y)).join(' ')}" fill="#f1f5f9" stroke="#0f172a" stroke-width="3.5" stroke-linejoin="round"/>`);
+sc.segs.forEach(sg => out += `<line x1="${X(sg.p1.x)}" y1="${Y(sg.p1.y)}" x2="${X(sg.p2.x)}" y2="${Y(sg.p2.y)}" stroke="#475569" stroke-width="2" stroke-dasharray="${sg.dash? '7 5': ''}"/>`);
+sc.labels.forEach(l => out += `<text x="${X(l.p.x)}" y="${Y(l.p.y)}" text-anchor="middle" dominant-baseline="middle" font-size="30" font-weight="bold" fill="#0f172a">${esc(l.text)}</text>`);
+sc.points.forEach(pt => {
+out += `<circle cx="${X(pt.p.x)}" cy="${Y(pt.p.y)}" r="7" fill="#0f172a"/>`;
+if (!pt.noLabel) out += `<text x="${X(pt.p.x) + 18}" y="${Y(pt.p.y) - 14}" font-size="27" font-style="italic" font-weight="bold" fill="#0f172a" font-family="'Times New Roman',serif">${esc(pt.label || pt.name)}</text>`;
+});
+out += `<text x="${W / 2}" y="${H - 24}" text-anchor="middle" font-size="19" fill="#64748b" font-family="sans-serif">${esc(built.summary)}</text>`;
+out += '</svg>';
+return out;
+}
+async function makePrintImage() {
+S.printSvg = buildPrintSvg();
+const blob = new Blob([S.printSvg], { type: 'image/svg+xml;charset=utf-8'});
+const url = URL.createObjectURL(blob);
+const img = new Image();
+await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url;});
+const cv = document.createElement('canvas');
+cv.width = 2246; cv.height = 1588;
+const ctx = cv.getContext('2d');
+ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
+ctx.drawImage(img, 0, 0, cv.width, cv.height);
+URL.revokeObjectURL(url);
+S.printPng = await new Promise(res => cv.toBlob(res, 'image/png'));
+const prev = $('print-preview');
+const purl = URL.createObjectURL(S.printPng);
+prev.innerHTML = `<img src="${purl}" alt="印刷用図形（A4横）" /><p class="hint">共有ボタンから「プリント」を選ぶと印刷できます。画像として保存もできます。</p>`;
+$('share-print').style.display = '';
+$('dl-print').style.display = '';
+toast('印刷用図形を作りました');
+}
+
+/* ================================================================
+* 気づきメモ（端末に保存）
+* ================================================================ */
+let memoTimer = null;
+function loadMemo() {
+const v = localStorage.getItem('gel-memo-' + S.fig) || '';
+$('memo').value = v;
+$('memo-saved').textContent = v? '保存済みのメモを読み込みました': '';
+}
+function saveMemo() {
+localStorage.setItem('gel-memo-' + S.fig, $('memo').value);
+$('memo-saved').textContent = 'メモを保存しました（この端末の中）';
+}
+
+/* ================================================================
+* 画面制御
+* ================================================================ */
+function toast(msg) {
+const t = $('toast');
+t.textContent = msg;
+t.classList.add('show');
+setTimeout(() => t.classList.remove('show'), 2400);
+}
+function setSteps(n) {
+document.querySelectorAll('#steps-student.step').forEach((el, i) => el.classList.toggle('now', i === n));
+}
+function setMode(mode) {
+S.mode = mode;
+document.body.dataset.mode = mode;
+$('mode-student').classList.toggle('active', mode === 'student');
+$('mode-teacher').classList.toggle('active', mode === 'teacher');
+$('steps-student').style.display = mode === 'student'? '': 'none';
+$('steps-teacher').style.display = mode === 'teacher'? '': 'none';
+$('teacher-unit-row').style.display = mode === 'teacher'? '': 'none';
+if (mode === 'teacher') document.querySelectorAll('#steps-teacher.step').forEach((el, i) => el.classList.toggle('now', i === 0));
+render();
+}
+function download(name, blob) {
+const a = document.createElement('a');
+a.href = URL.createObjectURL(blob);
+a.download = name;
+a.click();
+setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+async function copyText(text, okMsg) {
+try { await navigator.clipboard.writeText(text); toast(okMsg);}
+catch (_) { toast('コピーできませんでした');}
+}
+
+function init() {
+// 図形メニュー
+$('fig-grid').innerHTML = FIG_LIST.map(f => `<button type="button" class="fig-btn" data-fig="${f.key}">${f.name}<small>${f.sub}</small></button>`).join('');
+document.querySelectorAll('.fig-btn').forEach(b => b.addEventListener('click', () => { initFigure(b.dataset.fig); setSteps(1);}));
+$('prompt-btn').addEventListener('click', () => pickByPrompt($('prompt-input').value));
+$('prompt-input').addEventListener('keydown', e => { if (e.key === 'Enter') pickByPrompt($('prompt-input').value);});
+// モード
+$('mode-student').addEventListener('click', () => setMode('student'));
+$('mode-teacher').addEventListener('click', () => setMode('teacher'));
+// キャンバス操作
+$('toggle-measures').addEventListener('click', () => {
+S.showMeasures =!S.showMeasures;
+$('toggle-measures').textContent = S.showMeasures? '📏 数値ラベル ON': '📏 数値ラベル OFF';
+$('toggle-measures').setAttribute('aria-pressed', String(S.showMeasures));
+render();
+});
+$('reset-fig').addEventListener('click', () => { initFigure(S.fig); toast('最初の形に戻しました');});
+// メモ
+$('memo').addEventListener('input', () => { clearTimeout(memoTimer); memoTimer = setTimeout(saveMemo, 700);});
+// チャット
+addChat('こんにちは！図形を選んで、頂点をドラッグして探求を始めよう。分からないことがあったら聞いてね。', 'ai');
+const send = async () => {
+const v = $('chat-input').value.trim();
+if (!v) return;
+$('chat-input').value = '';
+addChat(v, 'user');
+if (geminiKey()) {
+addChat('考え中…', 'ai');
+const log = $('chat-log');
+try {
+const reply = await geminiGenerate(
+'あなたは優しい算数・数学の先生です。与えられた正確な数値だけを使い、数値を捏造せず、観察と対話を促してください。答えをすぐ言わず、気づきを引き出す問いかけを中心に、短めに答えてください。',
+`\n${numbersBlock(lastBuilt)}\n\n生徒の質問：${v}`
+);
+log.lastChild.textContent = reply || templateChatReply(v, lastBuilt);
+} catch (_) { log.lastChild.textContent = templateChatReply(v, lastBuilt);}
+} else {
+addChat(templateChatReply(v, lastBuilt), 'ai');
+}
+};
+$('chat-send').addEventListener('click', send);
+$('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') send();});
+$('ai-explain').addEventListener('click', async () => {
+const btn = $('ai-explain');
+btn.disabled = true; btn.textContent = '作っています…';
+try {
+const text = await geminiGenerate(
+'あなたは日本の数学教育の専門家です。与えられた正確な数値だけを使い、数値を捏造しないでください。生徒向けに、観察のポイントと次の問いを含む短い解説を書いてください。',
+`指示：${FIG_TITLE[S.fig]}の探求\n\n${numbersBlock(lastBuilt)}`
+);
+$('explain-body').innerHTML = '<h3>✨ AIの解説</h3><p style="white-space:pre-wrap">' + text.replace(/</g, '&lt;') + '</p>';
+} catch (_) { toast('AI解説を作れませんでした');}
+btn.disabled = false; btn.textContent = '✨ AIで解説を作る（キー使用）';
+});
+// 教師タブ
+document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+['lesson', 'worksheet', 'print'].forEach(k => $('tab-' + k).style.display = b.dataset.tab === k? '': 'none');
+}));
+$('make-lesson').addEventListener('click', () => {
+const d = lessonPlanData(lastBuilt);
+S.lessonText = lessonText(d);
+$('lesson-out').innerHTML = lessonHtml(d);
+$('ai-lesson').style.display = geminiKey()? '': 'none';
+toast('指導案を作りました');
+});
+$('ai-lesson').addEventListener('click', async () => {
+const btn = $('ai-lesson');
+btn.disabled = true; btn.textContent = '作っています…';
+try {
+const text = await geminiGenerate(
+'あなたは日本の数学教育の専門家です。与えられた正確な数値だけを使い、数値を捏造しないでください。3観点対応の学習指導案をMarkdownで書いてください。',
+`単元：${unitName()}（${gradeName()}）\n題材：${FIG_TITLE[S.fig]}（図形探求ラボで頂点を動かす探求活動）\n\n${numbersBlock(lastBuilt)}`
+);
+S.lessonText = text;
+$('lesson-out').innerHTML = '<p style="white-space:pre-wrap">' + text.replace(/</g, '&lt;') + '</p>';
+} catch (_) { toast('AI指導案を作れませんでした');}
+btn.disabled = false; btn.textContent = '✨ AIで指導案を作る';
+});
+$('copy-lesson').addEventListener('click', () => {
+if (!S.lessonText) { toast('先に指導案を作ってください'); return;}
+copyText(S.lessonText, '指導案のテキストをコピーしました');
+});
+$('make-worksheet').addEventListener('click', () => {
+const d = worksheetData(lastBuilt);
+S.worksheetText = worksheetText(d);
+$('worksheet-out').innerHTML = worksheetHtml(d);
+toast('ワークシートを作りました');
+});
+$('copy-worksheet').addEventListener('click', () => {
+if (!S.worksheetText) { toast('先にワークシートを作ってください'); return;}
+copyText(S.worksheetText, 'ワークシートのテキストをコピーしました');
+});
+$('make-print').addEventListener('click', () => makePrintImage().catch(() => toast('印刷用図形を作れませんでした')));
+$('share-print').addEventListener('click', async () => {
+if (!S.printPng) return;
+const file = new File([S.printPng], 'figure-a4.png', { type: 'image/png'});
+if (navigator.canShare && navigator.canShare({ files: [file]})) {
+try { await navigator.share({ files: [file], title: '印刷用図形'});} catch (_) {}
+} else {
+download('figure-a4.png', S.printPng);
+}
+});
+$('dl-print').addEventListener('click', () => { if (S.printPng) download('figure-a4.png', S.printPng);});
+$('dl-svg').addEventListener('click', () => download('figure.svg', new Blob([buildPrintSvg()], { type: 'image/svg+xml'})));
+// 設定
+if (geminiKey()) $('gemini-key').value = geminiKey();
+$('key-save').addEventListener('click', () => {
+const v = $('gemini-key').value.trim();
+if (v) { localStorage.setItem('gel-gemini-key', v); toast('キーを保存しました');}
+else { localStorage.removeItem('gel-gemini-key'); toast('キーを消しました');}
+render();
+});
+$('key-clear').addEventListener('click', () => {
+localStorage.removeItem('gel-gemini-key');
+$('gemini-key').value = '';
+toast('キーを消しました');
+render();
+});
+$('json-save').addEventListener('click', () => {
+const data = { fig: S.fig, pts: S.pts, params: S.params[S.fig]};
+download('figure.json', new Blob([JSON.stringify(data, null, 2)], { type: 'application/json'}));
+});
+$('json-load').addEventListener('click', () => $('json-file').click());
+$('json-file').addEventListener('change', e => {
+const f = e.target.files[0];
+if (!f) return;
+const r = new FileReader();
+r.onload = () => {
+try {
+const data = JSON.parse(r.result);
+if (data.params) S.params[data.fig] = data.params;
+initFigure(data.fig || 'tri-in');
+if (data.pts && Object.keys(data.pts).length) { S.pts = data.pts; render();}
+toast('図形を読み込みました');
+} catch (_) { toast('読み込めませんでした');}
+};
+r.readAsText(f);
+});
+// 初期表示
+S.params['tri-in'] = { base: 4, height: 3};
+initFigure('tri-in');
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
