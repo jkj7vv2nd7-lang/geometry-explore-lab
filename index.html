@@ -133,9 +133,8 @@
   #canvas-wrap { position: relative; background: #fffdf7; }
   #board { display: block; width: 100%; height: auto; touch-action: none; }
   #measure-bar {
-    position: absolute; left: 10px; bottom: 10px; right: 10px;
-    background: rgba(15, 23, 42, .86); color: #fff; border-radius: 12px;
-    padding: 8px 12px; font-size: 13px; line-height: 1.5; pointer-events: none;
+    margin: 0 10px 10px; background: #1e293b; color: #fff; border-radius: 12px;
+    padding: 8px 12px; font-size: 13px; line-height: 1.5;
   }
   #measure-bar .serif { font-size: 13.5px; }
   .drag-note { padding: 9px 16px; font-size: 12.5px; color: var(--sub); border-top: 1px solid var(--line); background: #fff; }
@@ -883,7 +882,7 @@ sc.points.forEach(pt => eat(pt.p));
 sc.labels.forEach(l => eat(l.p));
 if (minX > maxX) { minX = -4; maxX = 4; minY = -3; maxY = 3;}
 const spanX = Math.max(maxX - minX, 0.1), spanY = Math.max(maxY - minY, 0.1);
-const AH = VIEW_H - 128; // 下部の計測バーに隠れないよう、描画域の下を空ける
+const AH = VIEW_H; // 計測バーは盤面の下に置くため、描画域は全面を使う
 view.s = Math.min((VIEW_W - MARGIN * 2) / spanX, (AH - 48) / spanY);
 view.ox = VIEW_W / 2 - (minX + maxX) / 2 * view.s;
 view.oy = AH / 2 + (minY + maxY) / 2 * view.s;
