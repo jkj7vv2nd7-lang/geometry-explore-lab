@@ -316,7 +316,7 @@
           <svg id="board" viewBox="0 0 800 540" role="img" aria-label="図形キャンバス"></svg>
           <div id="measure-bar"></div>
         </div>
-        <p class="drag-note">💡 点（●）をドラッグすると図形が変形し、長さ・角度・面積がその場で変わります。「変わるもの／変わらないもの」を探してみましょう。</p>
+        <p class="drag-note">💡 点線の輪がついた色つきの●を、指でドラッグすると図形が変形し、長さ・角度・面積がその場で変わります。「変わるもの／変わらないもの」を探してみましょう。</p>
       </section>
 
       <div class="under-grid">
@@ -928,8 +928,12 @@ if (S.showMeasures) drawSideLabels(g, sc, X, Y);
 sc.points.forEach(pt => {
 const cx = X(pt.p.x), cy = Y(pt.p.y);
 const col = pt.color || 'var(--main)';
-const circle = svgEl('circle', { cx, cy, r: pt.r || 10, fill: col, stroke: '#fff', 'stroke-width': 2.5, style: pt.drag? 'cursor:grab;touch-action:none': ''}, g);
-if (pt.drag) attachDrag(circle, pt);
+if (pt.drag) {
+const hit = svgEl('circle', { cx, cy, r: 30, fill: 'rgba(0,0,0,0)', stroke: 'none', style: 'cursor:grab;touch-action:none'}, g);
+attachDrag(hit, pt);
+}
+const circle = svgEl('circle', { cx, cy, r: pt.r || 11, fill: col, stroke: '#fff', 'stroke-width': 3, style: pt.drag? 'pointer-events:none': ''}, g);
+if (pt.drag) svgEl('circle', { cx, cy, r: (pt.r || 11) + 6, fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '4 4', opacity: .55, style: 'pointer-events:none'}, g);
 if (!pt.noLabel) {
 const cen = centroid(sc.points.map(q => q.p));
 let dx = pt.p.x - cen.x, dy = pt.p.y - cen.y;
@@ -991,7 +995,6 @@ renderExplain(built);
 function attachDrag(el, pt) {
 el.addEventListener('pointerdown', e => {
 e.preventDefault();
-try { el.setPointerCapture(e.pointerId);} catch (_) {}
 const svg = $('board');
 const toMath = ev => {
 const rect = svg.getBoundingClientRect();
@@ -1016,13 +1019,14 @@ const inp = $('param-radius'); if (inp) inp.value = fmt(p.radius);
 render();
 };
 const up = () => {
-el.removeEventListener('pointermove', move);
-el.removeEventListener('pointerup', up);
-el.removeEventListener('pointercancel', up);
+window.removeEventListener('pointermove', move);
+window.removeEventListener('pointerup', up);
+window.removeEventListener('pointercancel', up);
 };
-el.addEventListener('pointermove', move);
-el.addEventListener('pointerup', up);
-el.addEventListener('pointercancel', up);
+window.addEventListener('pointermove', move);
+window.addEventListener('pointerup', up);
+window.addEventListener('pointercancel', up);
+move(e);
 });
 }
 
@@ -1082,6 +1086,7 @@ if ($('param-base')) p.base = Math.max(0.5, parseFloat($('param-base').value) ||
 if ($('param-height')) p.height = Math.max(0.5, parseFloat($('param-height').value) || p.height);
 initFigure(key);
 toast('図形を作り直しました');
+setTimeout(() => $('board').scrollIntoView({ block: 'center', behavior: 'smooth'}), 60);
 });
 const sel = $('param-subtype');
 if (sel && key === 'quad') sel.addEventListener('change', () => { p.subtype = sel.value; initFigure(key);});
@@ -1299,6 +1304,7 @@ prev.innerHTML = `<img src="${purl}" alt="印刷用図形（A4横）" /><p class
 $('share-print').style.display = '';
 $('dl-print').style.display = '';
 toast('印刷用図形を作りました');
+setTimeout(() => $('print-preview').scrollIntoView({ block: 'center', behavior: 'smooth'}), 60);
 }
 
 /* ================================================================
@@ -1415,6 +1421,7 @@ S.lessonText = lessonText(d);
 $('lesson-out').innerHTML = lessonHtml(d);
 $('ai-lesson').style.display = geminiKey()? '': 'none';
 toast('指導案を作りました');
+setTimeout(() => $('lesson-out').scrollIntoView({ block: 'start', behavior: 'smooth'}), 60);
 });
 $('ai-lesson').addEventListener('click', async () => {
 const btn = $('ai-lesson');
@@ -1438,6 +1445,7 @@ const d = worksheetData(lastBuilt);
 S.worksheetText = worksheetText(d);
 $('worksheet-out').innerHTML = worksheetHtml(d);
 toast('ワークシートを作りました');
+setTimeout(() => $('worksheet-out').scrollIntoView({ block: 'start', behavior: 'smooth'}), 60);
 });
 $('copy-worksheet').addEventListener('click', () => {
 if (!S.worksheetText) { toast('先にワークシートを作ってください'); return;}
